@@ -10,7 +10,7 @@ void vectorial_camera::update(float xOff, float yOff)
 	// Check for Mouse Imput
 	if (window::mouse_but_right_pressed)
 	{
-		float speed = MOUSE_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 5.0f : 1.0f);
+		float speed = MOUSE_SPEED * (window_manager->is_key_down(GLFW_KEY_LEFT_SHIFT) ? 50.0f : 1.0f);
 
 		if (window_manager->is_key_down(GLFW_KEY_W))
 			m_eye += m_front * speed;

@@ -1,5 +1,12 @@
 #include "generate_noise.h"
 
+static vec2 random_offset{ 0.0f, 0.0f };
+void randomize_noise()
+{
+	random_offset.x = rand() * rand() / (float)RAND_MAX;
+	random_offset.y = rand() * rand() / (float)RAND_MAX ;
+}
+
 map2d<float> generate_noise(size_t width, size_t height, float scale, int iterations, float persistance, float lacunarity, float lowerbound, float upperbound)
 {
 	map2d<float> noise_map{ width, height };
@@ -20,7 +27,7 @@ map2d<float> generate_noise(size_t width, size_t height, float scale, int iterat
 				float sampler_x = x / (width - 1.0f) * frequency;
 				float sampler_y = y / (height - 1.0f) * frequency;
 
-				noise_value += glm::perlin(vec2{ sampler_x, sampler_y }) * amplitude;
+				noise_value += glm::perlin(random_offset + vec2{ sampler_x, sampler_y }) * amplitude;
 
 				amplitude *= persistance;
 				frequency *= lacunarity;

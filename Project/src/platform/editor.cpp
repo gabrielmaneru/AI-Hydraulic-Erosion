@@ -3,6 +3,7 @@
 #include "window_manager.h"
 #include "window.h"
 #include <graphics/renderer.h>
+#include <utils/generate_noise.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
@@ -35,11 +36,10 @@ void c_editor::update()
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 	draw_main_window();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 }
 
 void c_editor::shutdown()
@@ -73,9 +73,13 @@ void c_editor::draw_main_window()
 		if(ImGui::SliderFloat("Scale", &renderer->m_noise.scale, 0.01f, 5.0f))changed = true;
 		if(ImGui::InputInt("Iterations", &renderer->m_noise.iterations))changed = true;
 		if(ImGui::SliderFloat("Persistance", &renderer->m_noise.persistance, 0.01f, 5.0f))changed = true;
-		if(ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
+		if (ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
+		if(ImGui::SliderFloat("Complexity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))renderer->m_noise.persistance = 1/renderer->m_noise.lacunarity, changed = true;
+		if (ImGui::Button("Random"))
+			changed = true, randomize_noise();
 		if (changed)
 			renderer->m_noise.update();
+		ImGui::SliderFloat("BlendFactor", &renderer->m_noise.blend_factor, 0.0f, 1.0f);
 		ImGui::TreePop();
 	}
 	ImGui::End();

@@ -20,6 +20,7 @@ bool c_renderer::init()
 
 	// GL Options
 	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
+	GL_CALL(glEnable(GL_CULL_FACE));
 
 	//Load Programs
 	try {
@@ -29,9 +30,9 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 
 	//Load Resources
-	scene_cam.m_eye = { 0.0f, 0.0f, 3.0f };
+	scene_cam.m_eye = { .0f, 500.0f, 800.0f };
 	scene_cam.m_yaw = -90.0f;
-	scene_cam.m_pitch = 0.0f;
+	scene_cam.m_pitch = -40.0f;
 	scene_cam.update_cam_vectors();
 
 	ortho_cam.view_rect = {-0.5f, 0.5f, -0.5f, 0.5f};
@@ -108,11 +109,21 @@ void c_renderer::update()
 		// Set shader
 		shader->use();
 		shader->set_uniform("MVP", mvp);
+		for (int i = 0; i < m_noise.levels.size(); ++i)
+		{
+			shader->set_uniform(("levels[" + std::to_string(i) + "].color").c_str(), m_noise.levels[i].color);
+			shader->set_uniform(("levels["+std::to_string(i)+"].height").c_str(), m_noise.levels[i].height);
+		}
+		assert(m_noise.levels.size() <= 10);
+		shader->set_uniform("active_levels", (int)m_noise.levels.size());
+		shader->set_uniform("blend_factor", m_noise.blend_factor);
 
 		// Draw Scene
+		GL_CALL(glEnable(GL_DEPTH_TEST));
 		GL_CALL(glBindVertexArray(m_noise.m_mesh.m_vao));
-		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
 		GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+		GL_CALL(glDisable(GL_DEPTH_TEST));
 	}
 
 	GL_CALL(glViewport(window_manager->get_width()*(4.0f/5.0f), 0, window_manager->get_width() / 5.0f, window_manager->get_height() / 5.0f));
