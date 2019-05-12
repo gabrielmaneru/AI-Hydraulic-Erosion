@@ -6,5 +6,5 @@ uniform sampler2D uniform_texture;
 void main()
 {
 	vec3 texel = texture2D(uniform_texture, var_uv).rgb;
-	out_color = vec4(texel, 1.0f);
+	out_color = vec4(vec3(texel.r), 1.0f);
 }

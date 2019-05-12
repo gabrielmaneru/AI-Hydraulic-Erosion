@@ -71,4 +71,9 @@ void window::update_window()
 	glfwPollEvents();
 	if (glfwWindowShouldClose(m_window))
 		session::end |= true;
+
+	int w, h;
+	glfwGetFramebufferSize(m_window, &w, &h);
+	if (h > 0)
+		m_width = w, m_height = h;
 }

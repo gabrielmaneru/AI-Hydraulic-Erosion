@@ -3,6 +3,7 @@
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <scene/scene.h>
+#include <utils/generate_noise.h>
 #include <GL/gl3w.h>
 #include <iostream>
 #include <algorithm>
@@ -21,7 +22,10 @@ bool c_renderer::init()
 	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 
 	//Load Programs
-	try { shader = new Shader_Program("resources/shaders/color.vert", "resources/shaders/color.frag"); }
+	try {
+		shader = new Shader_Program("resources/shaders/color.vert", "resources/shaders/color.frag");
+		texture_shader = new Shader_Program("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
 	//Load Resources
@@ -30,6 +34,9 @@ bool c_renderer::init()
 	scene_cam.m_pitch = 0.0f;
 	scene_cam.update_cam_vectors();
 
+	ortho_cam.view_rect = {-0.5f, 0.5f, -0.5f, 0.5f};
+
+	m_noise.update();
 	//Load Meshes
 	{ // Load Quad
 		std::vector<vec3> positions = {
@@ -51,6 +58,11 @@ bool c_renderer::init()
 				{1.0f, 1.0f},
 		};
 
+		// VAO
+		uint32_t vao{};
+		GL_CALL(glGenVertexArrays(1, &vao));
+		GL_CALL(glBindVertexArray(vao));
+
 		// Vertices
 		uint32_t vbo_vertices{};
 		GL_CALL(glGenBuffers(1, &vbo_vertices));
@@ -63,10 +75,6 @@ bool c_renderer::init()
 		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo_uv));
 		GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * uvs.size(), uvs.data(), GL_STATIC_DRAW));
 
-		// VAO
-		uint32_t vao{};
-		GL_CALL(glGenVertexArrays(1, &vao));
-		GL_CALL(glBindVertexArray(vao));
 
 		// Positions
 		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices));
@@ -89,22 +97,45 @@ void c_renderer::update()
 {
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+	GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
 
-	// Camera Update
-	scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
+	// Scene Pass
+	{
+		// Camera Update
+		scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
+		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), {0.1f, 0.1f, 0.1f});
 
-	// Set shader
-	shader->use();
+		// Set shader
+		shader->use();
+		shader->set_uniform("MVP", mvp);
 
-	mat4 mvp = scene_cam.m_proj * scene_cam.m_view;
-	shader->set_uniform("MVP", mvp);
+		// Draw Scene
+		GL_CALL(glBindVertexArray(m_noise.m_mesh.m_vao));
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+		GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+	}
 
-	// Bind mesh
-	GL_CALL(glBindVertexArray(quad.vao));
+	GL_CALL(glViewport(window_manager->get_width()*(4.0f/5.0f), 0, window_manager->get_width() / 5.0f, window_manager->get_height() / 5.0f));
+	// HUD Pass
+	{
+		// Camera Update
+		ortho_cam.update();
+		mat4 mvp = ortho_cam.m_proj * ortho_cam.m_view;
 
-	// Draw fill
-	GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+		// Set shader
+		texture_shader->use();
+		texture_shader->set_uniform("MVP", mvp);
+		GL_CALL(glActiveTexture(GL_TEXTURE0));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_noise.m_texture.m_id));
+		GL_CALL(glUniform1i(m_noise.m_texture.m_id, 0));
+
+		// Draw Quad
+
+		GL_CALL(glBindVertexArray(quad.vao));
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+		GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+	}
+
 }
 
 void c_renderer::shutdown()

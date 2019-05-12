@@ -55,9 +55,28 @@ void c_editor::draw_main_window()
 	ImGui::Begin("cs350 - editor", nullptr, ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2{ 0.0f, 0.0f });
 
-	ImGui::InputFloat3("Eye", &renderer->scene_cam.m_eye.x);
-	ImGui::InputFloat3("Front", &renderer->scene_cam.m_front.x);
-	ImGui::InputFloat3("Right", &renderer->scene_cam.m_right.x);
-	ImGui::InputFloat3("Up", &renderer->scene_cam.m_up.x);
+	if (ImGui::TreeNode("Camera"))
+	{
+		ImGui::InputFloat3("Eye", &renderer->scene_cam.m_eye.x);
+		ImGui::InputFloat3("Front", &renderer->scene_cam.m_front.x);
+		ImGui::InputFloat3("Right", &renderer->scene_cam.m_right.x);
+		ImGui::InputFloat3("Up", &renderer->scene_cam.m_up.x);
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("Noise"))
+	{
+		bool changed = false;
+		int resolution = static_cast<int>(renderer->m_noise.resolution);
+		if (ImGui::InputInt("Resolution", &resolution))
+			renderer->m_noise.resolution = static_cast<size_t>(resolution), changed = true;
+		if(ImGui::SliderFloat("Scale", &renderer->m_noise.scale, 0.01f, 5.0f))changed = true;
+		if(ImGui::InputInt("Iterations", &renderer->m_noise.iterations))changed = true;
+		if(ImGui::SliderFloat("Persistance", &renderer->m_noise.persistance, 0.01f, 5.0f))changed = true;
+		if(ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
+		if (changed)
+			renderer->m_noise.update();
+		ImGui::TreePop();
+	}
 	ImGui::End();
 }

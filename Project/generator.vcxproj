@@ -148,7 +148,10 @@
     <ClCompile Include="dependencies\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\core\session.cpp" />
     <ClCompile Include="src\core\main.cpp" />
+    <ClCompile Include="src\graphics\mesh.cpp" />
+    <ClCompile Include="src\graphics\noise_texture.cpp" />
     <ClCompile Include="src\graphics\ortho_camera.cpp" />
+    <ClCompile Include="src\graphics\raw_mesh.cpp" />
     <ClCompile Include="src\graphics\raw_texture.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\graphics\shader_program.cpp" />
@@ -158,6 +161,7 @@
     <ClCompile Include="src\platform\window.cpp" />
     <ClCompile Include="src\platform\window_manager.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
+    <ClCompile Include="src\utils\generate_noise.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\include\GLFW\glfw3.h" />
@@ -416,7 +420,10 @@
     <ClInclude Include="dependencies\include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\core\session.h" />
     <ClInclude Include="src\graphics\gl_error.h" />
+    <ClInclude Include="src\graphics\mesh.h" />
+    <ClInclude Include="src\graphics\noise_texture.h" />
     <ClInclude Include="src\graphics\ortho_camera.h" />
+    <ClInclude Include="src\graphics\raw_mesh.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
     <ClInclude Include="src\graphics\renderer.h" />
     <ClInclude Include="src\graphics\shader_program.h" />
@@ -427,6 +434,9 @@
     <ClInclude Include="src\platform\window_manager.h" />
     <ClInclude Include="src\scene\scene_object.h" />
     <ClInclude Include="src\scene\scene.h" />
+    <ClInclude Include="src\utils\map2d.h" />
+    <ClInclude Include="src\utils\math_utils.h" />
+    <ClInclude Include="src\utils\generate_noise.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dependencies\include\glm\detail\func_common.inl" />
