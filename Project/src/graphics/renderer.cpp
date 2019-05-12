@@ -103,7 +103,7 @@ void c_renderer::update()
 	{
 		// Camera Update
 		scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
-		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), {0.1f, 0.1f, 0.1f});
+		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_noise.scale, 100.f, m_noise.scale });
 
 		// Set shader
 		shader->use();

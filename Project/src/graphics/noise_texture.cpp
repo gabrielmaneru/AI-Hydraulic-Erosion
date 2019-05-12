@@ -31,7 +31,7 @@ void noise_texture::update()
 	{
 		for (unsigned x = 0; x < width; ++x)
 		{
-			m_mesh.vertices[vtx_index] = { topLeftX + x, m_texture.get(x,y)*width, topLeftZ - y };
+			m_mesh.vertices[vtx_index] = { topLeftX + x, m_texture.get(x,y), topLeftZ - y };
 			if (x < width - 1 && y < height - 1)
 			{
 				add_tri(vtx_index, vtx_index + width + 1, vtx_index + width);
