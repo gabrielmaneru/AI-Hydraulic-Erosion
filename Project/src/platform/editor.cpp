@@ -75,6 +75,7 @@ void c_editor::draw_main_window()
 		if(ImGui::SliderFloat("Persistance", &renderer->m_noise.persistance, 0.01f, 5.0f))changed = true;
 		if (ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
 		if(ImGui::SliderFloat("Complexity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))renderer->m_noise.persistance = 1/renderer->m_noise.lacunarity, changed = true;
+		if (ImGui::SliderFloat("FallOff", &renderer->m_noise.falloff, 0.0f, 1.0f))changed = true;
 		if (ImGui::Button("Random"))
 			changed = true, randomize_noise();
 		if (changed)

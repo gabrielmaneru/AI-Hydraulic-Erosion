@@ -8,11 +8,12 @@ struct noise_texture
 	raw_texture_single m_texture;
 	raw_mesh m_mesh;
 
-	size_t resolution{512};
-	float scale{3.0f};
+	size_t resolution{1024};
+	float scale{5.0f};
 	int iterations{8};
 	float persistance{0.20f};
 	float lacunarity{5.0f};
+	float falloff{ 0.75f };
 
 	float blend_factor{ 0.6f };
 

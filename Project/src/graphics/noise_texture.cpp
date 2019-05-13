@@ -2,7 +2,7 @@
 #include <utils/generate_noise.h>
 void noise_texture::update()
 {
-	map2d<float> new_texture = generate_noise(resolution, resolution, scale, iterations, persistance, lacunarity, 0.0f, 1.0f);
+	map2d<float> new_texture = generate_noise(resolution, scale, iterations, persistance, lacunarity, 0.0f, 1.0f, falloff);
 	m_texture.m_values = new_texture.m_values;
 	m_texture.m_height = new_texture.m_height;
 	m_texture.m_width = new_texture.m_width;

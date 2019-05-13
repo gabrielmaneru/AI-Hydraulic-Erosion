@@ -7,9 +7,9 @@ void randomize_noise()
 	random_offset.y = rand() * rand() / (float)RAND_MAX ;
 }
 
-map2d<float> generate_noise(size_t width, size_t height, float scale, int iterations, float persistance, float lacunarity, float lowerbound, float upperbound)
+map2d<float> generate_noise(size_t size, float scale, int iterations, float persistance, float lacunarity, float lowerbound, float upperbound, float falloff)
 {
-	map2d<float> noise_map{ width, height };
+	map2d<float> noise_map{ size, size };
 
 	if (scale <= 0.0f)
 		scale = FLT_EPSILON;
@@ -21,17 +21,21 @@ map2d<float> generate_noise(size_t width, size_t height, float scale, int iterat
 			float amplitude{ 1.0f };
 			float frequency{ scale };
 			float noise_value{ 0.0f };
+			float falloff_value = 1.0f - glm::max(glm::abs(x / (float)size * 2 - 1), glm::abs(y / (float)size * 2 - 1));
 
 			for (int i = 0; i < iterations; ++i)
 			{
-				float sampler_x = x / (width - 1.0f) * frequency;
-				float sampler_y = y / (height - 1.0f) * frequency;
+				float sampler_x = x / (size - 1.0f) * frequency;
+				float sampler_y = y / (size - 1.0f) * frequency;
 
-				noise_value += glm::perlin(random_offset + vec2{ sampler_x, sampler_y }) * amplitude;
+				noise_value += coef(-1.0f, 1.0f, glm::perlin(random_offset + vec2{ sampler_x, sampler_y })) * amplitude;
 
 				amplitude *= persistance;
 				frequency *= lacunarity;
 			}
+
+			noise_value = lerp(noise_value, noise_value * falloff_value, falloff);
+
 			if (noise_value < min_value)
 				min_value = noise_value;
 			if (noise_value > max_value)
