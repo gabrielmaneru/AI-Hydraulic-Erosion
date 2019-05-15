@@ -19,16 +19,16 @@ map2d<float> generate_noise(size_t size, float scale, int iterations, float pers
 		[&](size_t x, size_t y, float) -> float
 		{
 			float amplitude{ 1.0f };
-			float frequency{ scale };
+			float frequency{ 1.0f };
 			float noise_value{ 0.0f };
-			float falloff_value = 1.0f - glm::max(glm::abs(x / (float)size * 2 - 1), glm::abs(y / (float)size * 2 - 1));
+			float falloff_value = glm::pow(1.0f - glm::max(glm::abs(x / (float)size * 2 - 1), glm::abs(y / (float)size * 2 - 1)),2.0);
 
 			for (int i = 0; i < iterations; ++i)
 			{
 				float sampler_x = x / (size - 1.0f) * frequency;
 				float sampler_y = y / (size - 1.0f) * frequency;
 
-				noise_value += coef(-1.0f, 1.0f, glm::perlin(random_offset + vec2{ sampler_x, sampler_y })) * amplitude;
+				noise_value += coef(-1.0f, 1.0f, glm::perlin(random_offset + scale * vec2{ sampler_x, sampler_y })) * amplitude;
 
 				amplitude *= persistance;
 				frequency *= lacunarity;

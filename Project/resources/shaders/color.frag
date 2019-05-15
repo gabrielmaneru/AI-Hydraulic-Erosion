@@ -5,7 +5,8 @@ const int MAX_LEVELS = 10;
 struct LevelData
 {
 	vec3 color;
-	float height;
+	float txt_height;
+	float real_height;
 };
 uniform LevelData levels[MAX_LEVELS];
 uniform int active_levels;
@@ -18,16 +19,16 @@ void main()
 	vec3 level_color;
 	for(int i = 0; i < active_levels; i++)
 	{
-		if(vtx_height <= levels[i].height)
+		if(vtx_height <= levels[i].txt_height)
 		{
 			level_color = levels[i].color;
 
 			float prev = 0.0,post = 1.0;
 			if(i > 0)
-				prev = levels[i-1].height;
+				prev = levels[i-1].txt_height;
 
 			if( i < active_levels - 1)
-				post = levels[i].height;
+				post = levels[i].txt_height;
 
 			float factor = (vtx_height-prev) / (post-prev);
 			if(factor < blend_factor && i > 0)

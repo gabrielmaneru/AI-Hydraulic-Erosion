@@ -70,7 +70,7 @@ void c_editor::draw_main_window()
 		int resolution = static_cast<int>(renderer->m_noise.resolution);
 		if (ImGui::InputInt("Resolution", &resolution))
 			renderer->m_noise.resolution = static_cast<size_t>(resolution), changed = true;
-		if(ImGui::SliderFloat("Scale", &renderer->m_noise.scale, 0.01f, 5.0f))changed = true;
+		if (ImGui::SliderFloat("Noise Scale", &renderer->m_noise.noise_scale, 0.0f, 10.0f))changed = true;
 		if(ImGui::InputInt("Iterations", &renderer->m_noise.iterations))changed = true;
 		if(ImGui::SliderFloat("Persistance", &renderer->m_noise.persistance, 0.01f, 5.0f))changed = true;
 		if (ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
@@ -81,6 +81,9 @@ void c_editor::draw_main_window()
 		if (changed)
 			renderer->m_noise.update();
 		ImGui::SliderFloat("BlendFactor", &renderer->m_noise.blend_factor, 0.0f, 1.0f);
+		ImGui::InputFloat("Scale", &renderer->m_noise.display_scale);
+		ImGui::InputFloat("Height", &renderer->m_noise.display_height);
+		
 		ImGui::TreePop();
 	}
 	ImGui::End();

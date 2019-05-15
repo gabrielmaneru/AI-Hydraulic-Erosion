@@ -104,7 +104,7 @@ void c_renderer::update()
 	{
 		// Camera Update
 		scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
-		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_noise.scale, 100.f, m_noise.scale });
+		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_noise.display_scale, m_noise.display_height, m_noise.display_scale });
 
 		// Set shader
 		shader->use();
@@ -112,7 +112,8 @@ void c_renderer::update()
 		for (int i = 0; i < m_noise.levels.size(); ++i)
 		{
 			shader->set_uniform(("levels[" + std::to_string(i) + "].color").c_str(), m_noise.levels[i].color);
-			shader->set_uniform(("levels["+std::to_string(i)+"].height").c_str(), m_noise.levels[i].height);
+			shader->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), m_noise.levels[i].txt_height);
+			shader->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), m_noise.levels[i].real_height);
 		}
 		assert(m_noise.levels.size() <= 10);
 		shader->set_uniform("active_levels", (int)m_noise.levels.size());

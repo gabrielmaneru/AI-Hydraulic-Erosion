@@ -2,7 +2,7 @@
 #include <utils/generate_noise.h>
 void noise_texture::update()
 {
-	map2d<float> new_texture = generate_noise(resolution, scale, iterations, persistance, lacunarity, 0.0f, 1.0f, falloff);
+	map2d<float> new_texture = generate_noise(resolution, noise_scale, iterations, persistance, lacunarity, 0.0f, 1.0f, falloff);
 	m_texture.m_values = new_texture.m_values;
 	m_texture.m_height = new_texture.m_height;
 	m_texture.m_width = new_texture.m_width;
@@ -24,14 +24,14 @@ void noise_texture::update()
 	};
 
 	unsigned vtx_index = 0;
-	float topLeftX = (width - 1) / -2.0f;
-	float topLeftZ = (height - 1) / 2.0f;
-
 	for (unsigned y = 0; y < height; ++y)
 	{
 		for (unsigned x = 0; x < width; ++x)
 		{
-			m_mesh.vertices[vtx_index] = { topLeftX + x, m_texture.get(x,y), topLeftZ - y };
+			float x_factor = x / (width - 1.0f);
+			float y_factor = y / (height - 1.0f);
+
+			m_mesh.vertices[vtx_index] = { -0.5f + x_factor, m_texture.get(x,y), 0.5f - y_factor };
 			if (x < width - 1 && y < height - 1)
 			{
 				add_tri(vtx_index, vtx_index + width + 1, vtx_index + width);
