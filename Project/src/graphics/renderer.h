@@ -5,9 +5,10 @@
 #include "noise_texture.h"
 class c_renderer
 {
-	Shader_Program* shader;
+	Shader_Program* terrain_shader;
 	vectorial_camera scene_cam;
 	noise_texture m_noise;
+	Shader_Program* color_shader;
 	Shader_Program* texture_shader;
 	ortho_camera ortho_cam;
 

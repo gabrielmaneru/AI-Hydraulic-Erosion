@@ -8,16 +8,17 @@ struct noise_texture
 	raw_texture_single m_texture;
 	raw_mesh m_mesh;
 
-	size_t resolution{256u};
+	size_t resolution{512u};
 	int iterations{8};
-	float noise_scale{ 10.0f };
-	float persistance{0.20f};
-	float lacunarity{5.0f};
-	float falloff{ 1.0f };
+	float noise_scale{ 7.5f };
+	float persistance{0.50f};
+	float lacunarity{2.0f};
+	float falloff{ 4.0f };
 
 	float blend_factor{ 0.75f };
-	float display_scale{1000.0f};
-	float display_height{ 5.0f };
+	float terrain_slope{ 1.5f };
+	float display_scale{2000.0f};
+	float display_height{ 20.0f };
 
 	struct level
 	{
@@ -27,10 +28,10 @@ struct noise_texture
 	};
 	std::vector<level> levels
 	{
-		{vec3{0.0f, 0.0f, 0.2},  0.25f, 0.0f},
-		{vec3{0.2f, 0.2f, 0.8},  0.5f, 0.0f},
-		{vec3{0.9f, 0.9f, 0.5},  0.6f, 0.0f},
-		{vec3{0.1f, 0.4f, 0.2},  0.9f, 0.6f},
+		{vec3{0.0f, 0.0f, 0.2},  0.05f, 0.05f},
+		{vec3{0.2f, 0.2f, 0.8},  0.20f, 0.10f},
+		{vec3{0.9f, 0.9f, 0.5},  0.3f, 0.15f},
+		{vec3{0.1f, 0.4f, 0.2},  0.6f, 0.6f},
 		{vec3{0.4f, 0.4f, 0.1}, 1.0f, 1.0f}
 	};
 };

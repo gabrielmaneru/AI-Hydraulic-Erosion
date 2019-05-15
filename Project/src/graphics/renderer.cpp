@@ -24,7 +24,8 @@ bool c_renderer::init()
 
 	//Load Programs
 	try {
-		shader = new Shader_Program("resources/shaders/color.vert", "resources/shaders/color.frag");
+		terrain_shader = new Shader_Program("resources/shaders/terrain.vert", "resources/shaders/terrain.frag");
+		color_shader = new Shader_Program("resources/shaders/color.vert", "resources/shaders/color.frag");
 		texture_shader = new Shader_Program("resources/shaders/texture.vert", "resources/shaders/texture.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -104,25 +105,41 @@ void c_renderer::update()
 	{
 		// Camera Update
 		scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
-		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_noise.display_scale, m_noise.display_height, m_noise.display_scale });
+		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_noise.display_scale, m_noise.display_scale / 100.0f * m_noise.display_height, m_noise.display_scale });
 
 		// Set shader
-		shader->use();
-		shader->set_uniform("MVP", mvp);
+		terrain_shader->use();
+		terrain_shader->set_uniform("MVP", mvp);
 		for (int i = 0; i < m_noise.levels.size(); ++i)
 		{
-			shader->set_uniform(("levels[" + std::to_string(i) + "].color").c_str(), m_noise.levels[i].color);
-			shader->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), m_noise.levels[i].txt_height);
-			shader->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), m_noise.levels[i].real_height);
+			terrain_shader->set_uniform(("levels[" + std::to_string(i) + "].color").c_str(), m_noise.levels[i].color);
+			terrain_shader->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), m_noise.levels[i].txt_height);
+			terrain_shader->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), m_noise.levels[i].real_height);
 		}
 		assert(m_noise.levels.size() <= 10);
-		shader->set_uniform("active_levels", (int)m_noise.levels.size());
-		shader->set_uniform("blend_factor", m_noise.blend_factor);
+		terrain_shader->set_uniform("active_levels", (int)m_noise.levels.size());
+		terrain_shader->set_uniform("blend_factor", m_noise.blend_factor);
+		terrain_shader->set_uniform("terrain_slope", m_noise.terrain_slope);
 
 		// Draw Scene
 		GL_CALL(glEnable(GL_DEPTH_TEST));
 		GL_CALL(glBindVertexArray(m_noise.m_mesh.m_vao));
+
 		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+		GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+
+		color_shader->use();
+		color_shader->set_uniform("MVP", mvp);
+		color_shader->set_uniform("base_color", vec4{0.0f, 0.0f, 0.0f, 1.0f});
+		for (int i = 0; i < m_noise.levels.size(); ++i)
+		{
+			color_shader->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), m_noise.levels[i].txt_height);
+			color_shader->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), m_noise.levels[i].real_height);
+		}
+		assert(m_noise.levels.size() <= 10);
+		color_shader->set_uniform("active_levels", (int)m_noise.levels.size());
+		color_shader->set_uniform("terrain_slope", m_noise.terrain_slope);
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
 		GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 		GL_CALL(glDisable(GL_DEPTH_TEST));
 	}

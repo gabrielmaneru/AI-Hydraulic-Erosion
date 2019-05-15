@@ -21,7 +21,6 @@ map2d<float> generate_noise(size_t size, float scale, int iterations, float pers
 			float amplitude{ 1.0f };
 			float frequency{ 1.0f };
 			float noise_value{ 0.0f };
-			float falloff_value = glm::pow(1.0f - glm::max(glm::abs(x / (float)size * 2 - 1), glm::abs(y / (float)size * 2 - 1)),2.0);
 
 			for (int i = 0; i < iterations; ++i)
 			{
@@ -34,8 +33,8 @@ map2d<float> generate_noise(size_t size, float scale, int iterations, float pers
 				frequency *= lacunarity;
 			}
 
-			noise_value = lerp(noise_value, noise_value * falloff_value, falloff);
-
+			noise_value *= 1.0f - glm::pow(glm::max(glm::abs(x / (float)size * 2 - 1), glm::abs(y / (float)size * 2 - 1)), falloff);
+			
 			if (noise_value < min_value)
 				min_value = noise_value;
 			if (noise_value > max_value)

@@ -75,12 +75,13 @@ void c_editor::draw_main_window()
 		if(ImGui::SliderFloat("Persistance", &renderer->m_noise.persistance, 0.01f, 5.0f))changed = true;
 		if (ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
 		if(ImGui::SliderFloat("Complexity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))renderer->m_noise.persistance = 1/renderer->m_noise.lacunarity, changed = true;
-		if (ImGui::SliderFloat("FallOff", &renderer->m_noise.falloff, 0.0f, 1.0f))changed = true;
+		if (ImGui::SliderFloat("FallOff", &renderer->m_noise.falloff, 0.001f, 20.0f))changed = true;
 		if (ImGui::Button("Random"))
 			changed = true, randomize_noise();
 		if (changed)
 			renderer->m_noise.update();
 		ImGui::SliderFloat("BlendFactor", &renderer->m_noise.blend_factor, 0.0f, 1.0f);
+		ImGui::SliderFloat("TerrainSlope", &renderer->m_noise.terrain_slope, 0.01f, 5.0f);
 		ImGui::InputFloat("Scale", &renderer->m_noise.display_scale);
 		ImGui::InputFloat("Height", &renderer->m_noise.display_height);
 		

@@ -573,6 +573,8 @@
     <None Include="dependencies\include\glm\gtx\wrap.inl" />
     <None Include="resources\shaders\color.frag" />
     <None Include="resources\shaders\color.vert" />
+    <None Include="resources\shaders\terrain.frag" />
+    <None Include="resources\shaders\terrain.vert" />
     <None Include="resources\shaders\texture.frag" />
     <None Include="resources\shaders\texture.vert" />
   </ItemGroup>
