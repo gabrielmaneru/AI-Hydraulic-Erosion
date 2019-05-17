@@ -12,6 +12,7 @@ uniform LevelData levels[MAX_LEVELS];
 uniform int active_levels;
 uniform mat4 MVP;
 uniform float terrain_slope;
+uniform float z_off = 0.0;
 out float vtx_height;
 
 int get_level()
@@ -23,26 +24,40 @@ int get_level()
 	return i;
 }
 
+float get_prev_height(int level)
+{
+	float acc = 0;
+	for(int i = 0; i < level; i++)
+		acc +=levels[i].real_height;
+	return acc;
+}
+
 void main()
 {
 	vtx_height = attr_pos.y;
+
+	// Get Current level
 	int i = get_level();
 
-	float prev_txt = 0.0;
-	float prev_height = 0.0;
-	if(i > 0)
-	{
-		prev_txt = levels[i-1].txt_height;
-		prev_height = levels[i-1].real_height;
-	}
+	// Get Accumulated Height
+	float prev_height = get_prev_height(i);
 
-	float txt_factor = 0.0;
-	float txt_size = levels[i].txt_height-prev_txt;
-	if(txt_size > 0.0)
-		txt_factor = (attr_pos.y-prev_txt) / (levels[i].txt_height-prev_txt);
+	// Get base level
+	float prev_level = 0.0;
+	if(i > 0)
+		prev_level = levels[i-1].txt_height;
+
+	// Get current level ratio
+	float level_ratio = 0.0;
+	float level_size = levels[i].txt_height-prev_level;
+	if(level_size > 0.0)
+		level_ratio = (attr_pos.y-prev_level) / level_size;
 	
-	txt_factor = 1 - pow(1 - txt_factor, terrain_slope);
+	// Curve it
+	level_ratio = 1 - pow(1 - level_ratio, terrain_slope);
 	
-	float real_height = prev_height + (levels[i].real_height - prev_height) * txt_factor;
-	gl_Position = MVP * vec4(attr_pos.x, real_height - 0.5, attr_pos.z, 1.0);
+	// Compute real height
+	float real_height = prev_height + levels[i].real_height * level_ratio;
+	gl_Position = MVP * vec4(attr_pos.x, real_height, attr_pos.z, 1.0);
+	gl_Position.z -= z_off;
 }

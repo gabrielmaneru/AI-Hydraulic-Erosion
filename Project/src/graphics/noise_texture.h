@@ -7,6 +7,7 @@ struct noise_texture
 
 	raw_texture_single m_texture;
 	raw_mesh m_mesh;
+	raw_mesh m_water;
 
 	size_t resolution{512u};
 	int iterations{8};
@@ -18,7 +19,7 @@ struct noise_texture
 	float blend_factor{ 0.75f };
 	float terrain_slope{ 1.5f };
 	float display_scale{2000.0f};
-	float display_height{ 20.0f };
+	float display_height{ 2.0f };
 
 	struct level
 	{
@@ -28,10 +29,9 @@ struct noise_texture
 	};
 	std::vector<level> levels
 	{
-		{vec3{0.0f, 0.0f, 0.2},  0.05f, 0.05f},
-		{vec3{0.2f, 0.2f, 0.8},  0.20f, 0.10f},
-		{vec3{0.9f, 0.9f, 0.5},  0.3f, 0.15f},
-		{vec3{0.1f, 0.4f, 0.2},  0.6f, 0.6f},
-		{vec3{0.4f, 0.4f, 0.1}, 1.0f, 1.0f}
+		{vec3{0.941f, 0.941f, 0.471f}, 0.4f, 15.f},
+		{vec3{0.118f, 0.471f, 0.235f}, 0.7f, 20.f},
+		{vec3{0.275f, 0.234f, 0.078f}, 0.9f, 20.f},
+		{vec3{0.196f, 0.196f, 0.196f}, 1.0f, 10.f}
 	};
 };

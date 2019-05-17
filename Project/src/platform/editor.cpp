@@ -87,5 +87,19 @@ void c_editor::draw_main_window()
 		
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("Layers"))
+	{
+		for (int i = 0; i < renderer->m_noise.levels.size(); ++i)
+		{
+			if (ImGui::TreeNode(("Layer_" + std::to_string(i)).c_str()))
+			{
+				ImGui::ColorEdit3("Color", &renderer->m_noise.levels[i].color[0]);
+				ImGui::SliderFloat("Influence", &renderer->m_noise.levels[i].txt_height, 0.0f, 1.0f);
+				ImGui::SliderFloat("Height", &renderer->m_noise.levels[i].real_height, 0.0f, 100.0f);
+				ImGui::TreePop();
+			}
+		}
+		ImGui::TreePop();
+	}
 	ImGui::End();
 }
