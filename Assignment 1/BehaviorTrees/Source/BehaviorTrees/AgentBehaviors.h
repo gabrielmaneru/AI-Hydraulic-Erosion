@@ -20,6 +20,9 @@ namespace BT
 	// Get furthest agent from npc.
 	GameObject *GetFarthestAgent(GameObject *npc);
 
+	// Get nearest agent from npc.
+	GameObject *GetNearestAgent(GameObject *npc);
+
 	// Check if the target is near the position.
 	bool IsNear(const D3DXVECTOR3 &pos, const D3DXVECTOR3 &target, float nearDist = 1.0f / 100.0f);
 

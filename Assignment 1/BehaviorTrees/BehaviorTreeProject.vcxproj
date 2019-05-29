@@ -146,6 +146,7 @@
     <ClCompile Include="Source\BehaviorTrees\Nodes\BehaviorNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\CompositeNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\ControlFlowNode.cpp" />
+    <ClCompile Include="Source\BehaviorTrees\Nodes\ControlFlow\C_ConditionalSelector.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\ControlFlow\C_ParallelSequencer.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\ControlFlow\C_RandomSelector.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\ControlFlow\C_Selector.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="Source\BehaviorTrees\Nodes\InterrupterNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\LeafNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_CheckMouseClick.cpp" />
+    <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_DetectEnemy.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_Idle.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToFurthestTarget.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToMouseTarget.cpp" />
@@ -293,6 +295,7 @@
     <ClInclude Include="Source\BehaviorTrees\Nodes\BehaviorNode.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\CompositeNode.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\ControlFlowNode.h" />
+    <ClInclude Include="Source\BehaviorTrees\Nodes\ControlFlow\C_ConditionalSelector.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\ControlFlow\C_ParallelSequencer.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\ControlFlow\C_RandomSelector.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\ControlFlow\C_Selector.h" />
@@ -303,6 +306,7 @@
     <ClInclude Include="Source\BehaviorTrees\Nodes\InterrupterNode.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\LeafNode.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_CheckMouseClick.h" />
+    <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_DetectEnemy.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_Idle.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToFurthestTarget.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToMouseTarget.h" />

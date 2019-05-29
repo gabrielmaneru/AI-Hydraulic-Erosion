@@ -63,6 +63,43 @@ GameObject *BT::GetFarthestAgent(GameObject *npc)
 	return farthestGameObject;
 }
 
+GameObject * BT::GetNearestAgent(GameObject * npc)
+{
+	float nearestDistance = 0.0f;
+	GameObject *nearestGameObject = nullptr;
+	objectID npc_id = npc->GetID();
+	dbCompositionList list;
+	g_database.ComposeList(list, OBJECT_NPC);
+
+	dbCompositionList::iterator i;
+	for (i = list.begin(); i != list.end(); ++i)
+	{
+		if ((*i)->GetID() != npc_id)
+		{
+			D3DXVECTOR3 npcPos = (*i)->GetBody().GetPos();
+			D3DXVECTOR3 myPos = npc->GetBody().GetPos();
+			D3DXVECTOR3 diff = npcPos - myPos;
+			float distance = D3DXVec3Length(&diff);
+
+			if (nearestGameObject)
+			{
+				if (distance < nearestDistance)
+				{
+					nearestDistance = distance;
+					nearestGameObject = *i;
+				}
+			}
+			else
+			{
+				nearestDistance = distance;
+				nearestGameObject = *i;
+			}
+		}
+	}
+
+	return nearestGameObject;
+}
+
 /*--------------------------------------------------------------------------*
 Name:           IsNear
 

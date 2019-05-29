@@ -45,6 +45,7 @@ written consent of DigiPen Institute of Technology is prohibited.
 #include <BehaviorTrees/Nodes/ControlFlow/C_RandomSelector.h>
 #include <BehaviorTrees/Nodes/ControlFlow/C_Sequencer.h>
 #include <BehaviorTrees/Nodes/ControlFlow/C_Selector.h>
+#include <BehaviorTrees/Nodes/ControlFlow/C_ConditionalSelector.h>
 
 /* Decorator Nodes */
 
@@ -52,9 +53,9 @@ written consent of DigiPen Institute of Technology is prohibited.
 #include <BehaviorTrees/Nodes/Decorator/D_Inverter.h>
 
 /* Leaf Nodes */
-
 #include <BehaviorTrees/Nodes/Leaf/L_CheckMouseClick.h>
 #include <BehaviorTrees/Nodes/Leaf/L_Idle.h>
 #include <BehaviorTrees/Nodes/Leaf/L_MoveToFurthestTarget.h>
 #include <BehaviorTrees/Nodes/Leaf/L_MoveToMouseTarget.h>
 #include <BehaviorTrees/Nodes/Leaf/L_MoveToRandomTarget.h>
+#include <BehaviorTrees/Nodes/Leaf/L_DetectEnemy.h>

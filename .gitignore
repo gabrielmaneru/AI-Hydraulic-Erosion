@@ -11,8 +11,6 @@
 
 *.suo
 
-*.exe
-
 *.iobj
 
 *.ipdb

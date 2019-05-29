@@ -87,7 +87,7 @@ void World::Initialize( CMultiAnim *pMA, std::vector< CTiny* > *pv_pChars, CSoun
 #else
 		g_trees.Initialize();		// initialize behavior tree
 
-	for( int i=0; i<10; i++ )
+	for( int i=0; i<2; i++ )
 	{
 		//Create game objects
 		char name[10] = "BTAgent";
