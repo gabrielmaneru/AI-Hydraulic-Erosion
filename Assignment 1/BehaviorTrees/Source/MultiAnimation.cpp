@@ -427,7 +427,7 @@ HRESULT CALLBACK OnCreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFACE_D
 	D3DXMatrixRotationY(&mx, D3DX_PI / 4.0f);
 	D3DXMatrixMultiply(&g_mxFloor, &g_mxFloor, &mx);
 
-	D3DXMatrixScaling(&mx, initial_ground_size, 1.f, initial_ground_size);
+	D3DXMatrixScaling(&mx, ground_size, 1.f, ground_size);
 	D3DXMatrixMultiply(&g_mxFloor, &g_mxFloor, &mx);
 	D3DXMatrixTranslation(&mx, initial_ground_size * 0.5f, 0.0f, initial_ground_size * 0.5f);
 	D3DXMatrixMultiply(&g_mxFloor, &g_mxFloor, &mx);
@@ -735,30 +735,8 @@ void CALLBACK OnFrameRender(IDirect3DDevice9* pd3dDevice, double fTime, float fE
 			V(g_pMeshFloor->DrawSubset(0));
 			V(g_pEffect->EndPass());
 		}
-
-		D3DXMATRIX g_mxFloor2;
-		{
-			D3DXMATRIX mdl;
-
-			D3DXMatrixRotationX(&g_mxFloor2, -D3DX_PI / 2.0f);
-
-			D3DXMatrixRotationY(&mdl, D3DX_PI / 4.0f);
-			D3DXMatrixMultiply(&g_mxFloor2, &g_mxFloor2, &mdl);
-
-			D3DXMatrixScaling(&mdl, ground_size, 1.f, ground_size);
-			D3DXMatrixMultiply(&g_mxFloor2, &g_mxFloor2, &mdl);
-			D3DXMatrixTranslation(&mdl, initial_ground_size * 0.5f, 0.5f, initial_ground_size * 0.5f);
-			D3DXMatrixMultiply(&g_mxFloor2, &g_mxFloor2, &mdl);
-		}
-		V(g_pEffect->SetMatrix("g_mWorld", &g_mxFloor));
-		for (UINT p = 0; p < cPasses; ++p)
-		{
-			V(g_pEffect->BeginPass(p));
-			V(g_pMeshFloor->DrawSubset(0));
-			V(g_pEffect->EndPass());
-		}
 		V(g_pEffect->End());
-
+		
 		g_pWorld->AdvanceTimeAndDraw(pd3dDevice, &mx, fElapsedTime, &vEye);
 
 #ifdef OLD_TINY

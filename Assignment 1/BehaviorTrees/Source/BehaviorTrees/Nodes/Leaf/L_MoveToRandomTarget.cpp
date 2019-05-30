@@ -47,10 +47,14 @@ Status L_MoveToRandomTarget::OnEnter(NodeData *nodedata_ptr)
 	GameObject *self = nodedata_ptr->GetAgentData().GetGameObject();
 	D3DXVECTOR3 myPos = self->GetBody().GetPos();
 
-	D3DXVECTOR3 nextPos{g_random.RangeFloat(initial_ground_size - ground_size, 2 * initial_ground_size - ground_size), 0.0f,g_random.RangeFloat(initial_ground_size - ground_size, 2 * initial_ground_size - ground_size) }
+	D3DXVECTOR3 nextPos{
+		g_random.RangeFloat(initial_ground_size*0.5f - ground_size*0.5f, initial_ground_size*0.5f + ground_size*0.5f),
+		0.0f,
+		g_random.RangeFloat(initial_ground_size*0.5f - ground_size*0.5f, initial_ground_size*0.5f + ground_size*0.5f)
+	};
 	auto dir = nextPos - myPos;
 	D3DXVec3Normalize(&dir, &dir);
-	const float step_distance = 1.0f;
+	const float step_distance = 0.5f;
 
 	self->SetTargetPOS(myPos + dir * step_distance);
 	self->SetSpeedStatus(TinySpeedStatus::TS_WALK);

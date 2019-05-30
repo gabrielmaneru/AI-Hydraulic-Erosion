@@ -56,6 +56,8 @@ void World::PostInitialize()
 
 void World::Update(float dt)
 {
+	auto time = g_clock.GetElapsedTime();
+	ground_size = initial_ground_size + (1 - initial_ground_size) * (time / 60.0);
 	g_clock.MarkTimeThisTick();
 	g_database.Update();
 	g_trees.Update(dt);
