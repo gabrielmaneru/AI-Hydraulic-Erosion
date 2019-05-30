@@ -24,14 +24,14 @@ Status C_ConditionalSelector::OnUpdate(float dt, NodeData * nodedata_ptr)
 	switch (condition)
 	{
 	case BT::BT_READY:
-		RunChild(0, true, false, nodedata_ptr);
+		RunChild(nodedata_ptr->getLogic()->GetChildren()[0], true, false, nodedata_ptr);
 		return Status::BT_RUNNING;
 		break;
 
 	case BT::BT_SUCCESS:
 		if (nodedata_ptr->GetChildStatus(1) == Status::BT_READY)
 		{
-			RunChild(1, true, false, nodedata_ptr);
+			RunChild(nodedata_ptr->getLogic()->GetChildren()[1], true, false, nodedata_ptr);
 			return Status::BT_RUNNING;
 		}
 		else
@@ -42,7 +42,7 @@ Status C_ConditionalSelector::OnUpdate(float dt, NodeData * nodedata_ptr)
 	case BT::BT_FAILURE:
 		if (nodedata_ptr->GetChildStatus(2) == Status::BT_READY)
 		{
-			RunChild(2, true, false, nodedata_ptr);
+			RunChild(nodedata_ptr->getLogic()->GetChildren()[2], true, false, nodedata_ptr);
 			return Status::BT_RUNNING;
 		}
 		else

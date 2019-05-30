@@ -20,13 +20,11 @@
 
 #pragma warning( push, 3 )
 #pragma warning(disable:4786 4788)
-//#include <vector>
 #pragma warning( pop )
 #pragma warning(disable:4786 4788)
 
 #include <d3d9.h>
 #include <d3dx9.h>
-
 
 //#define DEBUG_VS   // Uncomment this line to debug vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug pixel shaders 
@@ -39,9 +37,6 @@
 
 class CMultiAnim;
 class CAnimInstance;
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: class CMultiAnimAllocateHierarchy
@@ -216,5 +211,11 @@ public:
 	virtual HRESULT     Draw();
 };
 
+#include "DXUT\SDKsound.h"
+#include <vector>
+class CTiny;
+extern CSoundManager           g_DSound;               // DirectSound class
+extern CMultiAnim              g_MultiAnim;            // the MultiAnim class for holding Tiny's mesh and frame hierarchy
+extern std::vector< CTiny* >   g_v_pCharacters;        // array of character objects; each can be associated with any of the CMultiAnims
 
 #endif // #ifndef __MULTIANIMATION_H__

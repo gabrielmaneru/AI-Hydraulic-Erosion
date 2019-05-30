@@ -34,7 +34,7 @@ class GameObject
 {
 public:
 
-	GameObject(objectID id, unsigned int type, char* name);
+	GameObject(objectID id, unsigned int type, const char* name);
 	~GameObject(void);
 
 	inline objectID GetID(void)					{ return(m_id); }
@@ -83,7 +83,7 @@ public:
 
 	// added for Behavior tree (Chi-Hao) END
 
-private:
+protected:
 	friend void PushText(objectID, std::string);
 	friend void RenderText();
 	std::stringstream m_behaviorTreeInfo;
@@ -104,4 +104,13 @@ private:
 	TinySpeedStatus m_speedstatus;	// agent's speed status
 	bool m_hasBehaviorTree;			// flag: if agent has behavior tree
 	// added for Behavior tree (Chi-Hao) END
+};
+
+class Soldier : public GameObject
+{
+	static const std::string entity_name;
+	static int entity_count;
+public:
+	Soldier();
+	~Soldier() = default;
 };

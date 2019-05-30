@@ -45,8 +45,14 @@ Status L_MoveToRandomTarget::OnEnter(NodeData *nodedata_ptr)
 	LeafNode::OnEnter(nodedata_ptr);
 
 	GameObject *self = nodedata_ptr->GetAgentData().GetGameObject();
+	D3DXVECTOR3 myPos = self->GetBody().GetPos();
 
-	self->SetTargetPOS(RandomPosition());
+	auto nextPos = RandomPosition();
+	auto dir = nextPos - myPos;
+	D3DXVec3Normalize(&dir, &dir);
+	const float step_distance = 0.02f;
+
+	self->SetTargetPOS(myPos + dir * step_distance);
 	self->SetSpeedStatus(TinySpeedStatus::TS_WALK);
 	SetTinySpeed(self);
 

@@ -1,0 +1,5 @@
+TREENAME(ClickMove)
+TREENODE(C_ConditionalSelector, 0)
+TREENODE(L_CheckMouseClick, 1)
+TREENODE(L_MoveToMouseTarget, 1)
+TREENODE(L_MoveToRandomTarget, 1)

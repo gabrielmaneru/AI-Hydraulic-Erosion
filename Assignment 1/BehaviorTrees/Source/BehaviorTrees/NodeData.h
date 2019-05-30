@@ -83,6 +83,7 @@ namespace BT
 		// Check if this node has parent
 		bool HasParent(void);
 
+		const BehaviorNode* getLogic() { return m_btnode_ptr; }
 	private:
 
 		/* variables */

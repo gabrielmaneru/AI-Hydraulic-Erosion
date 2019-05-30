@@ -13,12 +13,18 @@ Status L_DetectEnemy::OnEnter(NodeData * nodedata_ptr)
 	GameObject * nearest = GetNearestAgent(self);
 	if (nearest)
 	{
-		D3DXVECTOR3 npcPos = self->GetBody().GetPos();
-		D3DXVECTOR3 myPos = nearest->GetBody().GetPos();
-		D3DXVECTOR3 diff = npcPos - myPos;
+		D3DXVECTOR3 myPos = self->GetBody().GetPos();
+		D3DXVECTOR3 nearestPos = nearest->GetBody().GetPos();
+		D3DXVECTOR3 diff = myPos - nearestPos;
 		float distance = D3DXVec3Length(&diff);
-		if (distance < 5.0f)
+
+		TinyBlackBoard *tinybb = nodedata_ptr->GetAgentData().GetLocalBlackBoard<TinyBlackBoard>();
+		if (distance < tinybb->detection_distance)
+		{
+			tinybb->detected_position = nearestPos;
+			tinybb->detected_distance = distance;
 			return Status::BT_SUCCESS;
+		}
 	}
 	return Status::BT_FAILURE;
 }

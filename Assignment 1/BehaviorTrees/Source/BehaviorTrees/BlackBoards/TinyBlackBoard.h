@@ -24,9 +24,18 @@ namespace BT
 
 		GameObject *m_npc;				// agent's game object pointer
 
-		// for mouse click only, change later
+		// Mouse Click
 		bool m_mouseClick;
 		D3DXVECTOR3 m_mousePos;
+
+		// Detection
+		float detection_distance{ 0.5f };
+		D3DXVECTOR3 detected_position;
+		float detected_distance;
+
+		// Manage Minions
+		std::vector<unsigned int> minions;
+		unsigned int closer_minion;
 
 		/* constructors/destructor */
 

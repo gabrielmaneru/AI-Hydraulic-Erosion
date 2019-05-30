@@ -158,10 +158,12 @@
     <ClCompile Include="Source\BehaviorTrees\Nodes\LeafNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_CheckMouseClick.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_DetectEnemy.cpp" />
+    <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_HasMinions.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_Idle.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToFurthestTarget.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToMouseTarget.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToRandomTarget.cpp" />
+    <ClCompile Include="Source\BehaviorTrees\Nodes\Leaf\L_RunAwayFromTarget.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\ParallelNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\Nodes\RepeaterNode.cpp" />
     <ClCompile Include="Source\BehaviorTrees\TreeLogic.cpp" />
@@ -307,10 +309,12 @@
     <ClInclude Include="Source\BehaviorTrees\Nodes\LeafNode.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_CheckMouseClick.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_DetectEnemy.h" />
+    <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_HasMinions.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_Idle.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToFurthestTarget.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToMouseTarget.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_MoveToRandomTarget.h" />
+    <ClInclude Include="Source\BehaviorTrees\Nodes\Leaf\L_RunAwayFromTarget.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\ParallelNode.h" />
     <ClInclude Include="Source\BehaviorTrees\Nodes\RepeaterNode.h" />
     <ClInclude Include="Source\BehaviorTrees\TreeLogic.h" />

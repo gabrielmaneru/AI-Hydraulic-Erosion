@@ -59,3 +59,5 @@ written consent of DigiPen Institute of Technology is prohibited.
 #include <BehaviorTrees/Nodes/Leaf/L_MoveToMouseTarget.h>
 #include <BehaviorTrees/Nodes/Leaf/L_MoveToRandomTarget.h>
 #include <BehaviorTrees/Nodes/Leaf/L_DetectEnemy.h>
+#include <BehaviorTrees/Nodes/Leaf/L_HasMinions.h>
+#include <BehaviorTrees/Nodes/Leaf/L_RunAwayFromTarget.h>
