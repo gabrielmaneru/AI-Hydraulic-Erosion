@@ -171,10 +171,23 @@ const std::string Soldier::entity_name{ "Soldier" };
 Soldier::Soldier()
 	: GameObject(g_database.GetNewObjectID(), OBJECT_NPC, (Soldier::entity_name + "_" +std::to_string(Soldier::entity_count++)).c_str())
 {
-	D3DXVECTOR3 pos(0.0f, 0.0f, 0.0f);
-	pos.x = g_random.RangeFloat();
-	pos.z = g_random.RangeFloat();
-	CreateBody(100, pos);
+	CreateBody(100, D3DXVECTOR3{});
+	m_body->SetScale(3.0f);
+	CreateMovement();
+	CreateTiny(&g_MultiAnim, &g_v_pCharacters, &g_DSound, DXUTGetGlobalTimer()->GetTime(), 1.0f, 1.0f, 1.0f);	//Color if needed
+	g_database.Store(*this);
+
+	g_trees.Register(m_name, "Soldier");							// register agent to behavior tree
+	g_trees.GetAgentData(m_name).InitialTinyBlackBoard(this);		// initialize local blackboard for each tiny
+}
+
+int Kid::entity_count{ 0 };
+const std::string Kid::entity_name{ "Kid" };
+Kid::Kid()
+	: GameObject(g_database.GetNewObjectID(), OBJECT_NPC, (Kid::entity_name + "_" + std::to_string(Kid::entity_count++)).c_str())
+{
+	CreateBody(100, D3DXVECTOR3{});
+	m_body->SetScale(1.0f);
 	CreateMovement();
 	CreateTiny(&g_MultiAnim, &g_v_pCharacters, &g_DSound, DXUTGetGlobalTimer()->GetTime(), 1.0f, 1.0f, 1.0f);	//Color if needed
 	g_database.Store(*this);

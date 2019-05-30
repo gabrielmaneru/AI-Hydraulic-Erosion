@@ -217,5 +217,7 @@ class CTiny;
 extern CSoundManager           g_DSound;               // DirectSound class
 extern CMultiAnim              g_MultiAnim;            // the MultiAnim class for holding Tiny's mesh and frame hierarchy
 extern std::vector< CTiny* >   g_v_pCharacters;        // array of character objects; each can be associated with any of the CMultiAnims
+extern float				   ground_size;			   // size of the current available scene
+constexpr float			       initial_ground_size{5.0};
 
 #endif // #ifndef __MULTIANIMATION_H__

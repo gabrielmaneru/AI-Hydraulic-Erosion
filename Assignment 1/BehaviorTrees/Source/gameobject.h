@@ -114,3 +114,12 @@ public:
 	Soldier();
 	~Soldier() = default;
 };
+
+class Kid : public GameObject
+{
+	static const std::string entity_name;
+	static int entity_count;
+public:
+	Kid();
+	~Kid() = default;
+};
