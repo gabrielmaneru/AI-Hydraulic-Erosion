@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "gl_error.h"
+#include "quad.h"
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <scene/scene.h>
@@ -24,10 +25,11 @@ bool c_renderer::init()
 
 	//Load Programs
 	try {
-		terrain_shader = new Shader_Program("resources/shaders/terrain.vert", "resources/shaders/terrain.frag");
-		terrain_mesh_shader = new Shader_Program("resources/shaders/terrain.vert", "resources/shaders/color.frag");
-		water_shader = new Shader_Program("resources/shaders/water.vert", "resources/shaders/color.frag");
 		texture_shader = new Shader_Program("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+		noise_mesh_shader = new Shader_Program("resources/shaders/noise_mesh.vert", "resources/shaders/color.frag");
+		layer_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/layer.frag");
+		layer_mesh_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/layer_mesh.frag");
+		//water_shader = new Shader_Program("resources/shaders/water.vert", "resources/shaders/color.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
@@ -38,61 +40,11 @@ bool c_renderer::init()
 	scene_cam.update_cam_vectors();
 
 	ortho_cam.view_rect = {-0.5f, 0.5f, -0.5f, 0.5f};
+	ortho_cam.update();
 
-	m_noise.update();
-	//Load Meshes
-	{ // Load Quad
-		std::vector<vec3> positions = {
-					{-0.5f, -0.5f, 0.0f},
-					{0.5f,  -0.5f, 0.0f},
-					{0.5f,  0.5f,  0.0f},
+	m_generator.init();
 
-					{-0.5f, 0.5f,  0.0f},
-					{-0.5f, -0.5f, 0.0f},
-					{0.5f,  0.5f,  0.0f},
-		};
-
-		std::vector<vec2> uvs = {
-				{0.0f, 0.0f},
-				{1.0f, 0.0f},
-				{1.0f, 1.0f},
-				{0.0f, 1.0f},
-				{0.0f, 0.0f},
-				{1.0f, 1.0f},
-		};
-
-		// VAO
-		uint32_t vao{};
-		GL_CALL(glGenVertexArrays(1, &vao));
-		GL_CALL(glBindVertexArray(vao));
-
-		// Vertices
-		uint32_t vbo_vertices{};
-		GL_CALL(glGenBuffers(1, &vbo_vertices));
-		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices));
-		GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * positions.size(), positions.data(), GL_STATIC_DRAW));
-
-		// UV
-		uint32_t vbo_uv{};
-		GL_CALL(glGenBuffers(1, &vbo_uv));
-		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo_uv));
-		GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * uvs.size(), uvs.data(), GL_STATIC_DRAW));
-
-
-		// Positions
-		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices));
-		GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr));
-		GL_CALL(glEnableVertexAttribArray(0));
-
-		// UV
-		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo_uv));
-		GL_CALL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr));
-		GL_CALL(glEnableVertexAttribArray(1));
-		GL_CALL(glBindVertexArray(0));
-
-		quad.vao = vao;
-		quad.cnt = 6;
-	}
+	quad.load();
 	return true;
 }
 
@@ -102,91 +54,67 @@ void c_renderer::update()
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
 
-	// Scene Pass
-	{
-		// Camera Update
-		scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
-		mat4 mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_noise.display_scale, m_noise.display_scale / 1000.0f * m_noise.display_height, m_noise.display_scale });
+	// Camera Update
+	scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
+	mat4 mvp;
 
-		// Draw Terrain
-		{
-			terrain_shader->use();
-			terrain_shader->set_uniform("MVP", mvp);
-			for (int i = 0; i < m_noise.levels.size(); ++i)
-			{
-				terrain_shader->set_uniform(("levels[" + std::to_string(i) + "].color").c_str(), m_noise.levels[i].color);
-				terrain_shader->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), m_noise.levels[i].txt_height);
-				terrain_shader->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), m_noise.levels[i].real_height);
-			}
-			assert(m_noise.levels.size() <= 10);
-			terrain_shader->set_uniform("active_levels", (int)m_noise.levels.size());
-			terrain_shader->set_uniform("blend_factor", m_noise.blend_factor);
-			terrain_shader->set_uniform("terrain_slope", m_noise.terrain_slope);
+	switch (m_generator.step)
+	{
+	case s_select_noise_map:
+		{// Draw Mesh
+			mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_generator.display_scale, m_generator.display_scale/4, m_generator.display_scale });
+			noise_mesh_shader->use();
+			noise_mesh_shader->set_uniform("MVP", mvp);
+			noise_mesh_shader->set_uniform("base_color", vec4{ 1.0f, 0.0f, 1.0f, 1.0f });
+			// Draw Scene
+			GL_CALL(glEnable(GL_DEPTH_TEST));
+			GL_CALL(glBindVertexArray(m_generator.m_noise.m_naive_mesh.m_vao));
+			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+			GL_CALL(glDrawElements(GL_TRIANGLES, m_generator.m_noise.m_naive_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDisable(GL_DEPTH_TEST));
+		}
+		{// Draw Noise Image
+			GL_CALL(glViewport(window_manager->get_width()*(4.0f / 5.0f), 0, window_manager->get_width() / 5.0f, window_manager->get_height() / 5.0f));
+			
+			texture_shader->use();
+			texture_shader->set_uniform("MVP", ortho_cam.m_proj * ortho_cam.m_view);
+			GL_CALL(glActiveTexture(GL_TEXTURE0));
+			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_noise.m_texture.m_id));
+			GL_CALL(glUniform1i(m_generator.m_noise.m_texture.m_id, 0));
+
+			// Draw Quad
+			GL_CALL(glBindVertexArray(quad.vao));
+			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+			GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+		}
+		break;
+
+	case s_apply_layers:
+		{// Draw Terrain
+			mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_generator.display_scale, 1.0f, m_generator.display_scale });
+			layer_shader->use();
+			layer_shader->set_uniform("MVP", mvp);
+			m_generator.set_uniforms(layer_shader, generator::e_shader::e_color_mesh);
 
 			// Draw Scene
 			GL_CALL(glEnable(GL_DEPTH_TEST));
-			GL_CALL(glBindVertexArray(m_noise.m_mesh.m_vao));
+			GL_CALL(glBindVertexArray(m_generator.m_mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, m_generator.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 		}
-		
-		// Draw Terrain Mesh
-		{
-			terrain_mesh_shader->use();
-			terrain_mesh_shader->set_uniform("MVP", mvp);
-			terrain_mesh_shader->set_uniform("base_color", vec4{0.0f, 0.0f, 0.0f, 1.0f});
-			for (int i = 0; i < m_noise.levels.size(); ++i)
-			{
-				terrain_mesh_shader->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), m_noise.levels[i].txt_height);
-				terrain_mesh_shader->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), m_noise.levels[i].real_height);
-			}
-			assert(m_noise.levels.size() <= 10);
-			terrain_mesh_shader->set_uniform("active_levels", (int)m_noise.levels.size());
-			terrain_mesh_shader->set_uniform("terrain_slope", m_noise.terrain_slope);
-			terrain_mesh_shader->set_uniform("z_off", 0.01f);
+		{// Draw Terrain Mesh
+			layer_mesh_shader->use();
+			layer_mesh_shader->set_uniform("MVP", mvp);
+			layer_mesh_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
+			m_generator.set_uniforms(layer_mesh_shader, generator::e_shader::e_mesh);
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
-		}
-
-		// Draw Water
-		{
-			water_shader->use();
-			water_shader->set_uniform("MVP", mvp);
-			water_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 1.0f, 1.0f });
-			static float dt = 0.0f;
-			dt += 0.016f;
-			water_shader->set_uniform("dt", dt);
-			GL_CALL(glBindVertexArray(m_noise.m_water.m_vao));
-			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_water.faces.size(), GL_UNSIGNED_INT, 0));
-			water_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_noise.m_water.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, m_generator.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			GL_CALL(glDisable(GL_DEPTH_TEST));
 		}
+		break;
+	default:
+		break;
 	}
-
-	GL_CALL(glViewport(window_manager->get_width()*(4.0f/5.0f), 0, window_manager->get_width() / 5.0f, window_manager->get_height() / 5.0f));
-	// HUD Pass
-	{
-		// Camera Update
-		ortho_cam.update();
-		mat4 mvp = ortho_cam.m_proj * ortho_cam.m_view;
-
-		// Set shader
-		texture_shader->use();
-		texture_shader->set_uniform("MVP", mvp);
-		GL_CALL(glActiveTexture(GL_TEXTURE0));
-		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_noise.m_texture.m_id));
-		GL_CALL(glUniform1i(m_noise.m_texture.m_id, 0));
-
-		// Draw Quad
-
-		GL_CALL(glBindVertexArray(quad.vao));
-		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-		GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
-	}
-
 }
 
 void c_renderer::shutdown()

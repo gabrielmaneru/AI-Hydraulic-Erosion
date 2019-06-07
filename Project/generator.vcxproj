@@ -148,9 +148,11 @@
     <ClCompile Include="dependencies\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\core\session.cpp" />
     <ClCompile Include="src\core\main.cpp" />
+    <ClCompile Include="src\graphics\generator.cpp" />
     <ClCompile Include="src\graphics\mesh.cpp" />
     <ClCompile Include="src\graphics\noise_texture.cpp" />
     <ClCompile Include="src\graphics\ortho_camera.cpp" />
+    <ClCompile Include="src\graphics\quad.cpp" />
     <ClCompile Include="src\graphics\raw_mesh.cpp" />
     <ClCompile Include="src\graphics\raw_texture.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
@@ -419,10 +421,12 @@
     <ClInclude Include="dependencies\include\imgui\imstb_textedit.h" />
     <ClInclude Include="dependencies\include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\core\session.h" />
+    <ClInclude Include="src\graphics\generator.h" />
     <ClInclude Include="src\graphics\gl_error.h" />
     <ClInclude Include="src\graphics\mesh.h" />
     <ClInclude Include="src\graphics\noise_texture.h" />
     <ClInclude Include="src\graphics\ortho_camera.h" />
+    <ClInclude Include="src\graphics\quad.h" />
     <ClInclude Include="src\graphics\raw_mesh.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
     <ClInclude Include="src\graphics\renderer.h" />
@@ -572,8 +576,10 @@
     <None Include="dependencies\include\glm\gtx\vector_query.inl" />
     <None Include="dependencies\include\glm\gtx\wrap.inl" />
     <None Include="resources\shaders\color.frag" />
-    <None Include="resources\shaders\terrain.frag" />
-    <None Include="resources\shaders\terrain.vert" />
+    <None Include="resources\shaders\layer_mesh.frag" />
+    <None Include="resources\shaders\noise_mesh.vert" />
+    <None Include="resources\shaders\layer.frag" />
+    <None Include="resources\shaders\layer.vert" />
     <None Include="resources\shaders\texture.frag" />
     <None Include="resources\shaders\texture.vert" />
     <None Include="resources\shaders\water.vert" />

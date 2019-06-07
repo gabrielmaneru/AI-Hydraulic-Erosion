@@ -3,7 +3,6 @@
 #include "window_manager.h"
 #include "window.h"
 #include <graphics/renderer.h>
-#include <utils/generate_noise.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
@@ -63,43 +62,6 @@ void c_editor::draw_main_window()
 		ImGui::InputFloat3("Up", &renderer->scene_cam.m_up.x);
 		ImGui::TreePop();
 	}
-
-	if (ImGui::TreeNode("Noise"))
-	{
-		bool changed = false;
-		int resolution = static_cast<int>(renderer->m_noise.resolution);
-		if (ImGui::InputInt("Resolution", &resolution))
-			renderer->m_noise.resolution = static_cast<size_t>(resolution), changed = true;
-		if (ImGui::SliderFloat("Noise Scale", &renderer->m_noise.noise_scale, 0.0f, 10.0f))changed = true;
-		if(ImGui::InputInt("Iterations", &renderer->m_noise.iterations))changed = true;
-		if(ImGui::SliderFloat("Persistance", &renderer->m_noise.persistance, 0.01f, 5.0f))changed = true;
-		if (ImGui::SliderFloat("Lacunarity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))changed = true;
-		if(ImGui::SliderFloat("Complexity", &renderer->m_noise.lacunarity, 0.01f, 5.0f))renderer->m_noise.persistance = 1/renderer->m_noise.lacunarity, changed = true;
-		if (ImGui::SliderFloat("FallOff", &renderer->m_noise.falloff, 0.001f, 20.0f))changed = true;
-		if (ImGui::Button("Random"))
-			changed = true, randomize_noise();
-		if (changed)
-			renderer->m_noise.update();
-		ImGui::SliderFloat("BlendFactor", &renderer->m_noise.blend_factor, 0.0f, 1.0f);
-		ImGui::SliderFloat("TerrainSlope", &renderer->m_noise.terrain_slope, 0.01f, 5.0f);
-		ImGui::InputFloat("Scale", &renderer->m_noise.display_scale);
-		ImGui::InputFloat("Height", &renderer->m_noise.display_height);
-		
-		ImGui::TreePop();
-	}
-	if (ImGui::TreeNode("Layers"))
-	{
-		for (int i = 0; i < renderer->m_noise.levels.size(); ++i)
-		{
-			if (ImGui::TreeNode(("Layer_" + std::to_string(i)).c_str()))
-			{
-				ImGui::ColorEdit3("Color", &renderer->m_noise.levels[i].color[0]);
-				ImGui::SliderFloat("Influence", &renderer->m_noise.levels[i].txt_height, 0.0f, 1.0f);
-				ImGui::SliderFloat("Height", &renderer->m_noise.levels[i].real_height, 0.0f, 100.0f);
-				ImGui::TreePop();
-			}
-		}
-		ImGui::TreePop();
-	}
+	renderer->m_generator.draw_gui();
 	ImGui::End();
 }

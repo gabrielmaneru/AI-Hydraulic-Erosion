@@ -4,6 +4,7 @@
 struct raw_mesh
 {
 	void load();
+	void free();
 	unsigned int m_vao{ 0 };
 	unsigned int m_vtx{ 0 };
 	unsigned int m_idx{ 0 };

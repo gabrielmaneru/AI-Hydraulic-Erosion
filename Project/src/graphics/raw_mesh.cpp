@@ -24,3 +24,13 @@ void raw_mesh::load()
 
 	GL_CALL(glBindVertexArray(0));
 }
+
+void raw_mesh::free()
+{
+	if (m_vao > 0)
+	{
+		GL_CALL(glDeleteBuffers(1, &m_vtx));
+		GL_CALL(glDeleteBuffers(1, &m_idx));
+		GL_CALL(glDeleteVertexArrays(1, &m_vao));
+	}
+}
