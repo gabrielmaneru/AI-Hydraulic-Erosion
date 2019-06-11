@@ -11,8 +11,6 @@
 
 *.suo
 
-*.exe
-
 *.iobj
 
 *.ipdb
@@ -31,3 +29,5 @@
 Project/obj/
 
 *.ipch
+
+Assignment 1/BehaviorTrees/Debug/

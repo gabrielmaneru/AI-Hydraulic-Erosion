@@ -1,0 +1,3 @@
+#include "../BTResources/ClickMove.bht"
+#include "../BTResources/Example.bht"
+#include "../BTResources/Soldier.bht"

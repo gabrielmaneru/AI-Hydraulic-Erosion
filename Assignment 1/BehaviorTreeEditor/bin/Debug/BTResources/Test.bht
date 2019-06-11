@@ -1,0 +1,3 @@
+TREENAME(Test)
+TREENODE(D_Delay, 0)
+TREENODE(L_MoveToRandomTarget, 1)
