@@ -16,7 +16,7 @@ bool Movement::ComputePath( int r, int c, bool newRequest )
 	m_movementMode = MOVEMENT_WAYPOINT_LIST;
 
 	// project 2: change this flag to true
-	bool useAStar = false;
+	bool useAStar = true;
 
 	if( useAStar )
 	{
@@ -26,9 +26,31 @@ bool Movement::ComputePath( int r, int c, bool newRequest )
 		//2. You will need to make this function remember the current progress if it preemptively exits.
 		//3. Return "true" if the path is complete, otherwise "false".
 		///////////////////////////////////////////////////////////////////////////////////////////////////
+		if (newRequest)
+		{
+			int flags{0};
+			if (m_smooth)		flags |= a_star::e_smooth;
+			if (m_rubberband)	flags |= a_star::e_rubberband;
+			if (m_straightline)	flags |= a_star::e_straightline;
+			if (m_singleStep)	flags |= a_star::e_singlestep;
 
-		return false;
-
+			if (m_pathfinder.initialize(m_owner->GetBody().GetPos(), m_goal, flags,m_heuristicWeight, m_heuristicCalc ))
+			{
+				// If start == goal or straight path found
+				m_waypointList = m_pathfinder.m_waypoints;
+				return true;
+			}
+			return false;
+		}
+		else
+		{
+			if (m_pathfinder.iterate())
+			{
+				m_waypointList = m_pathfinder.m_waypoints;
+				return true;
+			}
+			return false;
+		}
 	}
 	else
 	{	

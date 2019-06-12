@@ -27,6 +27,11 @@ Terrain::~Terrain()
 		i->Destroy();
 }
 
+bool Terrain::CheckBoundaries(int r, int c)
+{
+	return r >= 0 && c >= 0 && r < m_width && c < m_width;
+}
+
 void Terrain::Create( void )
 {
 	NextMap();

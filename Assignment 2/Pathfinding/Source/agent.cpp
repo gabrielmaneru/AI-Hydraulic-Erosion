@@ -60,7 +60,8 @@ BeginStateMachine
 
 	//Global message responses
 
-	OnMsg( MSG_MapChange )
+	OnMsg(MSG_MapChange)
+	
 		//////////////////////////////////////
 		// Add code here to handle map changes
 		//////////////////////////////////////

@@ -30,6 +30,7 @@ public:
 	Terrain(void);
 	~Terrain(void);
 
+	bool CheckBoundaries(int r, int c);
 	void Create(void);
 	void NextMap(void);
 	int GetMapIndex(void)					{ return(m_nextMap); }

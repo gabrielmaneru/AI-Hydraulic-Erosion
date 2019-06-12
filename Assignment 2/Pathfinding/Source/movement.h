@@ -9,6 +9,7 @@
  */
 
 #pragma once
+#include <a_star.h>
 
 class GameObject;
 
@@ -74,6 +75,7 @@ public:
 protected:
 
 	GameObject* m_owner;
+	a_star m_pathfinder;
 
 	bool m_smooth;
 	bool m_rubberband;
