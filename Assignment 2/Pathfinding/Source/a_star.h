@@ -20,8 +20,9 @@ private:
 	{
 		coord(vec3& p) { g_terrain.GetRowColumn(&p, &r, &c); }
 		coord(int r_, int c_) : r(r_), c(c_) {}
-		bool operator==(const coord& other) { return r == other.r && c == other.c; }
-		coord operator+(const coord& other) { return coord{ r + other.r, c + other.c }; }
+		bool operator==(const coord& other) const { return r == other.r && c == other.c; }
+		coord operator+(const coord& other) const { return coord{ r + other.r, c + other.c }; }
+		coord operator-(const coord& other) const { return coord{ r - other.r, c - other.c }; }
 		bool is_wall() { return g_terrain.IsWall(r, c); }
 
 		int r,c;
@@ -58,10 +59,13 @@ private:
 	} utils;
 	
 	void reset();
+	void create_waypoint_list(node next_node);
+	void insert_possible_neighboors(const node& next_node);
 	void insert_open_list(const node && c);
 	node find_node_minimum_cost();
 	bool is_clear_path(coord a, coord b);
 	bool is_flag(e_Flag f);
+	float compute_heuristic(const coord& c);
 
 	float m_heuristic_weight;
 	int m_heuristic_method;
