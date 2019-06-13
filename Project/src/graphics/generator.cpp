@@ -46,7 +46,7 @@ void generator::draw_gui()
 	if (ImGui::Button("Prev") && step > s_select_noise_map)
 		return change_step(step - 1);
 	ImGui::SameLine(0);
-	if (ImGui::Button("Next") && step < s_apply_layers)
+	if (ImGui::Button("Next") && step < s_rasterization)
 		return change_step(step + 1);
 	ImGui::Text("Options:");
 
@@ -93,6 +93,79 @@ void generator::draw_gui()
 		
 }
 
+void generator::rasterize_mesh()
+{
+	m_rasterized_mesh.faces = m_layer_mesh.faces;
+	m_rasterized_mesh.vertices = m_layer_mesh.vertices;
+	m_rasterized_mesh.uv_coord.resize(m_layer_mesh.vertices.size());
+	m_rasterized_txt.setup(m_noise.resolution, m_noise.resolution);
+	m_rasterized_txt.clear({});
+
+	for (size_t y = 0; y < m_noise.resolution; y++)
+		for (size_t x = 0; x < m_noise.resolution; x++)
+		{
+			vec3& vertex = m_rasterized_mesh.vertices[y*m_noise.resolution + x];
+			vec2& uv = m_rasterized_mesh.uv_coord[y*m_noise.resolution + x];
+			float value = vertex.y;
+
+			// Get level
+			int current=0;
+			for (; current < levels.size(); current++)
+				if (value <= levels[current].txt_height)
+					break;
+
+			// Get Acc height
+			float acc = 0;
+			for (int i = 0; i < current; i++)
+				acc += levels[i].real_height;
+
+
+			// Get base level
+			float prev_level = 0.0;
+			if (current > 0)
+				prev_level = levels[current - 1].txt_height;
+
+			// Get current level ratio
+			float level_ratio = 0.0;
+			float level_size = levels[current].txt_height - prev_level;
+			if (level_size > 0.0)
+				level_ratio = (value - prev_level) / level_size;
+
+			// Curve it
+			level_ratio = 1 - pow(1 - level_ratio, terrain_slope);
+
+			// Compute real height
+
+			vertex.y = acc + levels[current].real_height * level_ratio;
+			vertex.x *= display_scale;
+			vertex.z *= display_scale;
+
+			vec3 level_color = levels[current].color;
+
+			float prev = 0.0, post = 1.0;
+			if (current > 0)
+				prev = levels[current - 1].txt_height;
+
+			if (current < levels.size() - 1)
+				post = levels[current].txt_height;
+
+			float factor = (value - prev) / (post - prev);
+			if (factor < blend_factor && current > 0)
+			{
+				level_color += (levels[current - 1].color - level_color) * ((blend_factor - factor) / (blend_factor * 2));
+			}
+			if ((1 - factor) < blend_factor && (current < levels.size() - 1))
+			{
+				level_color += (levels[current + 1].color - level_color) * ((blend_factor - (1 - factor)) / (blend_factor * 2));
+			}
+
+			m_rasterized_txt.set(x, y, level_color);
+		}
+
+	m_rasterized_mesh.load();
+	m_rasterized_txt.load();
+}
+
 void generator::enter_step()
 {
 	switch (step)
@@ -102,7 +175,9 @@ void generator::enter_step()
 		m_noise.generate();
 		break;
 	case s_apply_layers:
-
+		break;
+	case s_rasterization:
+		rasterize_mesh();
 		break;
 	default:
 		break;
@@ -116,11 +191,12 @@ void generator::exit_step()
 	case s_select_noise_map:
 		m_noise.resolution = m_noise.post_resolution;
 		m_noise.generate();
-		m_mesh = m_noise.m_naive_mesh;
+		m_layer_mesh = m_noise.m_naive_mesh;
 		m_noise.m_naive_mesh = {};
 		break;
 	case s_apply_layers:
-
+		break;
+	case s_rasterization:
 		break;
 	default:
 		break;

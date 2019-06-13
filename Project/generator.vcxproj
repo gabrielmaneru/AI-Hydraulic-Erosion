@@ -576,7 +576,6 @@
     <None Include="dependencies\include\glm\gtx\vector_query.inl" />
     <None Include="dependencies\include\glm\gtx\wrap.inl" />
     <None Include="resources\shaders\color.frag" />
-    <None Include="resources\shaders\layer_mesh.frag" />
     <None Include="resources\shaders\noise_mesh.vert" />
     <None Include="resources\shaders\layer.frag" />
     <None Include="resources\shaders\layer.vert" />

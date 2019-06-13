@@ -28,7 +28,7 @@ bool c_renderer::init()
 		texture_shader = new Shader_Program("resources/shaders/texture.vert", "resources/shaders/texture.frag");
 		noise_mesh_shader = new Shader_Program("resources/shaders/noise_mesh.vert", "resources/shaders/color.frag");
 		layer_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/layer.frag");
-		layer_mesh_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/layer_mesh.frag");
+		layer_mesh_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/color.frag");
 		//water_shader = new Shader_Program("resources/shaders/water.vert", "resources/shaders/color.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
@@ -70,18 +70,18 @@ void c_renderer::update()
 			GL_CALL(glEnable(GL_DEPTH_TEST));
 			GL_CALL(glBindVertexArray(m_generator.m_noise.m_naive_mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_generator.m_noise.m_naive_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei) m_generator.m_noise.m_naive_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			GL_CALL(glDisable(GL_DEPTH_TEST));
 		}
 		{// Draw Noise Image
-			GL_CALL(glViewport(window_manager->get_width()*(4.0f / 5.0f), 0, window_manager->get_width() / 5.0f, window_manager->get_height() / 5.0f));
+			GL_CALL(glViewport((GLsizei)(window_manager->get_width()*(4.0f / 5.0f)), 0, (GLsizei)(window_manager->get_width() / 5.0f), (GLsizei)(window_manager->get_height() / 5.0f)));
 			
 			texture_shader->use();
 			texture_shader->set_uniform("MVP", ortho_cam.m_proj * ortho_cam.m_view);
+			texture_shader->set_uniform("dim", 1);
 			GL_CALL(glActiveTexture(GL_TEXTURE0));
 			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_noise.m_texture.m_id));
-			GL_CALL(glUniform1i(m_generator.m_noise.m_texture.m_id, 0));
-
+			
 			// Draw Quad
 			GL_CALL(glBindVertexArray(quad.vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
@@ -98,9 +98,9 @@ void c_renderer::update()
 
 			// Draw Scene
 			GL_CALL(glEnable(GL_DEPTH_TEST));
-			GL_CALL(glBindVertexArray(m_generator.m_mesh.m_vao));
+			GL_CALL(glBindVertexArray(m_generator.m_layer_mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_generator.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_layer_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 		}
 		{// Draw Terrain Mesh
 			layer_mesh_shader->use();
@@ -108,9 +108,27 @@ void c_renderer::update()
 			layer_mesh_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 			m_generator.set_uniforms(layer_mesh_shader, generator::e_shader::e_mesh);
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-			GL_CALL(glDrawElements(GL_TRIANGLES, m_generator.m_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_layer_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			GL_CALL(glDisable(GL_DEPTH_TEST));
 		}
+		break;
+
+	case s_rasterization:
+	{// Draw Mesh
+		mvp = scene_cam.m_proj * scene_cam.m_view;
+		texture_shader->use();
+		texture_shader->set_uniform("MVP", mvp);
+		texture_shader->set_uniform("dim", 3);
+		GL_CALL(glActiveTexture(GL_TEXTURE0));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized_txt.m_id));
+		
+		// Draw Scene
+		GL_CALL(glEnable(GL_DEPTH_TEST));
+		GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+		GL_CALL(glDisable(GL_DEPTH_TEST));
+	}
 		break;
 	default:
 		break;

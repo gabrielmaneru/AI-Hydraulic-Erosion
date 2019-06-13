@@ -13,20 +13,20 @@ void noise_texture::generate()
 	m_naive_mesh.faces.resize((m_texture.m_width - 1) * (m_texture.m_height - 1) * 6);
 
 	size_t tri_index = 0;
-	unsigned width = m_texture.m_width;
-	unsigned height= m_texture.m_height;
-	auto add_tri = [&](unsigned a, unsigned b, unsigned c)
+	size_t width = m_texture.m_width;
+	size_t height= m_texture.m_height;
+	auto add_tri = [&](size_t a, size_t b, size_t c)
 	{
-		m_naive_mesh.faces[tri_index] = a;
-		m_naive_mesh.faces[tri_index + 1u] = b;
-		m_naive_mesh.faces[tri_index + 2u] = c;
+		m_naive_mesh.faces[tri_index] =		 (unsigned)a;
+		m_naive_mesh.faces[tri_index + 1u] = (unsigned)b;
+		m_naive_mesh.faces[tri_index + 2u] = (unsigned)c;
 		tri_index +=3;
 	};
 
-	unsigned vtx_index = 0;
-	for (unsigned y = 0; y < height; ++y)
+	size_t vtx_index = 0;
+	for (size_t y = 0; y < height; ++y)
 	{
-		for (unsigned x = 0; x < width; ++x)
+		for (size_t x = 0; x < width; ++x)
 		{
 			float x_factor = x / (width - 1.0f);
 			float y_factor = y / (height - 1.0f);
