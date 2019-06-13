@@ -30,11 +30,12 @@ private:
 	struct node
 	{
 		node(const coord& c, const coord& p, float cost)
-			: m_coord(c), m_parent(p), m_cost(cost) {}
+			: m_coord(c), m_parent(p), m_movement_cost(cost) {}
 
 		coord m_coord;
 		coord m_parent;
-		float m_cost;
+		float m_heuristic_cost{0.0f};
+		float m_movement_cost;
 	};
 	const struct
 	{
@@ -60,8 +61,12 @@ private:
 	
 	void reset();
 	void create_waypoint_list(node next_node);
+	void insert_smoothing(	const std::list<vec3>::iterator& control_0,
+							const std::list<vec3>::iterator& point_0,
+							const std::list<vec3>::iterator& point_1,
+							const std::list<vec3>::iterator& control_1);
 	void insert_possible_neighboors(const node& next_node);
-	void insert_open_list(const node && c);
+	void insert_open_list(node && c);
 	node find_node_minimum_cost();
 	bool is_clear_path(coord a, coord b);
 	bool is_flag(e_Flag f);
