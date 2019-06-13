@@ -29,7 +29,11 @@ bool a_star::iterate()
 	{
 		// Check if is empty
 		if (m_open_list.empty())
+		{
+			if (m_closed_list.size() > 0)
+				m_waypoints.push_back(g_terrain.GetCoordinates(m_closed_list.begin()->m_coord.r, m_closed_list.begin()->m_coord.c));
 			return true;
+		}
 
 		// find node minimum cost
 		node next_node = find_node_minimum_cost();
@@ -49,6 +53,7 @@ bool a_star::iterate()
 
 void a_star::reset()
 {
+	// Clear lists
 	m_waypoints.clear();
 	m_open_list.clear();
 	m_closed_list.clear();
@@ -57,6 +62,8 @@ void a_star::reset()
 void a_star::create_waypoint_list(node next_node)
 {
 	m_waypoints.clear();
+
+	// push parents recursively
 	m_waypoints.push_back(m_goal);
 	while (!(next_node.m_parent == utils.c_root))
 	{
@@ -69,8 +76,10 @@ void a_star::create_waypoint_list(node next_node)
 			}
 	}
 
+	// Apply rubberbanding
 	if (is_flag(e_rubberband) && m_waypoints.size() > 2)
 	{
+		// Select a continiuous trio
 		auto start = m_waypoints.begin();
 		auto mid = start; mid++;
 		auto end = mid; end++;
@@ -78,15 +87,20 @@ void a_star::create_waypoint_list(node next_node)
 		{
 			coord c_start{ *start };
 			coord c_end{ *end };
+
+			// If there is a clear path from 1 to 3, then delete 2
 			if (is_clear_path(c_start, c_end))
 			{
 				end++;
 				mid = m_waypoints.erase(mid);
 			}
+			// Move to next trio
 			else
 				end++, mid++, start++;
 		}
 	}
+
+	// Apply Smoothing
 	if (is_flag(e_smooth))
 	{
 		// Perform Mid Point Subdivision
@@ -109,17 +123,21 @@ void a_star::create_waypoint_list(node next_node)
 			if (m_waypoints.size() <2)
 				return;
 
+			// Get fourth points
 			auto c_0 = m_waypoints.begin();
 			auto p_0 = c_0; p_0++;
 			if (m_waypoints.size() == 2)
 				return insert_smoothing(c_0, c_0, p_0, p_0);
 			auto p_1 = p_0; p_1++;
 			auto c_1 = p_1; c_1++;
+
 			while (1)
 			{
+				// Initial steps
 				if(c_0 == m_waypoints.begin())
 					insert_smoothing(c_0, c_0, p_0, p_1);
 
+				// Intermidiate steps
 				if (c_1 != m_waypoints.end())
 				{
 					insert_smoothing(c_0, p_0, p_1, c_1);
@@ -130,6 +148,7 @@ void a_star::create_waypoint_list(node next_node)
 				}
 				else
 				{
+					// Ending steps
 					insert_smoothing(c_0, p_0, p_1, p_1);
 					break;
 				}
@@ -145,7 +164,7 @@ void a_star::insert_smoothing(	const std::list<vec3>::iterator& control_0,
 {
 	vec3 val[3];
 	D3DXVec3CatmullRom(val  , &*control_0, &*point_0, &*point_1, &*control_1, .25f);
-	D3DXVec3CatmullRom(val+1, &*control_0, &*point_0, &*point_1, &*control_1, .5f);
+	D3DXVec3CatmullRom(val+1, &*control_0, &*point_0, &*point_1, &*control_1, .50f);
 	D3DXVec3CatmullRom(val+2, &*control_0, &*point_0, &*point_1, &*control_1, .75f);
 	m_waypoints.insert(point_1, val[0]);
 	m_waypoints.insert(point_1, val[1]);
@@ -177,7 +196,8 @@ void a_star::insert_possible_neighboors(const node & next_node)
 				copy_in_list = it;
 				break;
 			}
-		if (copy_in_list != m_closed_list.end()) continue;
+		if (copy_in_list != m_closed_list.end())
+			continue;
 
 		// Check same node is already in open list
 		copy_in_list = m_open_list.end();
@@ -187,8 +207,12 @@ void a_star::insert_possible_neighboors(const node & next_node)
 				copy_in_list = it;
 				break;
 			}
+
+		// Insert it if no copy found
 		if (copy_in_list == m_open_list.end())
 			insert_open_list(node{ c_neighboor, next_node.m_coord, new_cost });
+
+		// Keep the best one of those two
 		else if (new_cost < copy_in_list->m_movement_cost)
 		{
 			copy_in_list->m_parent = next_node.m_coord;
@@ -203,6 +227,8 @@ bool a_star::is_clear_path(coord a, coord b)
 	int r_max = (a.r > b.r) ? a.r : b.r;
 	int c_min = (a.c < b.c) ? a.c : b.c;
 	int c_max = (a.c > b.c) ? a.c : b.c;
+
+	// Check rectangular zone is clear
 	for (int r = r_min; r <= r_max; r++)
 		for (int c = c_min; c <= c_max; c++)
 			if (g_terrain.IsWall(r, c))
@@ -219,6 +245,7 @@ void a_star::insert_open_list(node && c)
 
 a_star::node a_star::find_node_minimum_cost()
 {
+	// finde node of minimum cost
 	std::list<node>::iterator minimum_cost = m_open_list.begin();
 	float min_found = minimum_cost->m_heuristic_cost + minimum_cost->m_movement_cost;
 	for (auto it = minimum_cost; it != m_open_list.end(); it++)
@@ -227,14 +254,6 @@ a_star::node a_star::find_node_minimum_cost()
 		if (local_cost < min_found)
 			minimum_cost = it, min_found = local_cost;
 	}
-
-	//for (auto it = m_open_list.begin(); it != m_open_list.end(); it++)
-	//{
-	//	if (it == minimum_cost)
-	//		std::cout << "  ";
-	//	std::cout << "(" << it->m_coord.r << "," << it->m_coord.c << "): " << it->m_cost << std::endl;
-	//}
-	//std::cout << std::endl;
 
 	// take it out from the list
 	node next_node = *minimum_cost;
@@ -246,12 +265,16 @@ a_star::node a_star::find_node_minimum_cost()
 
 bool a_star::is_flag(e_Flag f)
 {
+	// flag fast check
 	return static_cast<bool>(m_flags & f);
 }
 
 float a_star::compute_heuristic(const coord & c)
 {
+	// compute differential
 	coord delta = c - coord(m_goal);
+
+	// Apply selected algorithm
 	float value;
 	switch (m_heuristic_method)
 	{
@@ -271,5 +294,7 @@ float a_star::compute_heuristic(const coord & c)
 	default:
 		break;
 	}
+	 
+	// Apply weight and return
 	return value * m_heuristic_weight;
 }
