@@ -134,10 +134,13 @@ void generator::rasterize_mesh()
 			// Curve it
 			level_ratio = 1 - pow(1 - level_ratio, terrain_slope);
 
-			// Compute real height
+			// Compute uvs
+			uv.x = map(vertex.x, -0.5f, 0.5f, 0.0f, 1.0f);
+			uv.y = map(vertex.z, 0.5f, -0.5f, 0.0f, 1.0f);
 
-			vertex.y = acc + levels[current].real_height * level_ratio;
+			// Compute real height
 			vertex.x *= display_scale;
+			vertex.y = acc + levels[current].real_height * level_ratio;
 			vertex.z *= display_scale;
 
 			vec3 level_color = levels[current].color;
@@ -161,7 +164,7 @@ void generator::rasterize_mesh()
 
 			m_rasterized_txt.set(x, y, level_color);
 		}
-
+	m_rasterized_mesh.compute_terrain_normals();
 	m_rasterized_mesh.load();
 	m_rasterized_txt.load();
 }

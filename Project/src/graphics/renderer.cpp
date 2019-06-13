@@ -26,10 +26,10 @@ bool c_renderer::init()
 	//Load Programs
 	try {
 		texture_shader = new Shader_Program("resources/shaders/texture.vert", "resources/shaders/texture.frag");
-		noise_mesh_shader = new Shader_Program("resources/shaders/noise_mesh.vert", "resources/shaders/color.frag");
+		basic_shader = new Shader_Program("resources/shaders/basic.vert", "resources/shaders/color.frag");
 		layer_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/layer.frag");
 		layer_mesh_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/color.frag");
-		//water_shader = new Shader_Program("resources/shaders/water.vert", "resources/shaders/color.frag");
+		gradient_shader = new Shader_Program("resources/shaders/basic.vert", "resources/shaders/gradient.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
@@ -63,9 +63,9 @@ void c_renderer::update()
 	case s_select_noise_map:
 		{// Draw Mesh
 			mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_generator.display_scale, m_generator.display_scale/4, m_generator.display_scale });
-			noise_mesh_shader->use();
-			noise_mesh_shader->set_uniform("MVP", mvp);
-			noise_mesh_shader->set_uniform("base_color", vec4{ 1.0f, 0.0f, 1.0f, 1.0f });
+			basic_shader->use();
+			basic_shader->set_uniform("MVP", mvp);
+			basic_shader->set_uniform("base_color", vec4{ 1.0f, 0.0f, 1.0f, 1.0f });
 			// Draw Scene
 			GL_CALL(glEnable(GL_DEPTH_TEST));
 			GL_CALL(glBindVertexArray(m_generator.m_noise.m_naive_mesh.m_vao));
@@ -116,9 +116,9 @@ void c_renderer::update()
 	case s_rasterization:
 	{// Draw Mesh
 		mvp = scene_cam.m_proj * scene_cam.m_view;
-		texture_shader->use();
-		texture_shader->set_uniform("MVP", mvp);
-		texture_shader->set_uniform("dim", 3);
+		gradient_shader->use();
+		gradient_shader->set_uniform("MVP", mvp);
+		gradient_shader->set_uniform("dim", 3);
 		GL_CALL(glActiveTexture(GL_TEXTURE0));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized_txt.m_id));
 		
@@ -127,7 +127,6 @@ void c_renderer::update()
 		GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
 		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
 		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
-		GL_CALL(glDisable(GL_DEPTH_TEST));
 	}
 		break;
 	default:

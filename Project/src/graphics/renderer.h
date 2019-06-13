@@ -7,10 +7,10 @@ class c_renderer
 {
 	// Shaders
 	Shader_Program* texture_shader;
-	Shader_Program* noise_mesh_shader;
+	Shader_Program* basic_shader;
 	Shader_Program* layer_shader;
 	Shader_Program* layer_mesh_shader;
-	Shader_Program* water_shader;
+	Shader_Program* gradient_shader;
 
 	// Cameras
 	vectorial_camera scene_cam;
