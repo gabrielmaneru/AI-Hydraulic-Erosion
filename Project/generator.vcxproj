@@ -148,6 +148,8 @@
     <ClCompile Include="dependencies\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\core\session.cpp" />
     <ClCompile Include="src\core\main.cpp" />
+    <ClCompile Include="src\graphics\eroder.cpp" />
+    <ClCompile Include="src\graphics\framebuffer.cpp" />
     <ClCompile Include="src\graphics\generator.cpp" />
     <ClCompile Include="src\graphics\mesh.cpp" />
     <ClCompile Include="src\graphics\noise_texture.cpp" />
@@ -421,6 +423,8 @@
     <ClInclude Include="dependencies\include\imgui\imstb_textedit.h" />
     <ClInclude Include="dependencies\include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\core\session.h" />
+    <ClInclude Include="src\graphics\eroder.h" />
+    <ClInclude Include="src\graphics\framebuffer.h" />
     <ClInclude Include="src\graphics\generator.h" />
     <ClInclude Include="src\graphics\gl_error.h" />
     <ClInclude Include="src\graphics\mesh.h" />
@@ -582,6 +586,7 @@
     <None Include="resources\shaders\layer.vert" />
     <None Include="resources\shaders\texture.frag" />
     <None Include="resources\shaders\texture.vert" />
+    <None Include="resources\shaders\water.frag" />
     <None Include="resources\shaders\water.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

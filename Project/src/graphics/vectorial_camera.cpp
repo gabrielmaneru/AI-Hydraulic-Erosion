@@ -40,8 +40,7 @@ void vectorial_camera::update(float xOff, float yOff)
 		update_cam_vectors();
 	}
 
-	// Update Camera Matrices
-	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
+	// Update Projection
 	float aspect = window_manager->get_width() / (float)window_manager->get_height();
 	m_proj = glm::perspective(m_fovY, aspect, m_near, m_far);
 }
@@ -58,4 +57,20 @@ void vectorial_camera::update_cam_vectors()
 	// Recompute Right and Up
 	m_right = glm::normalize(glm::cross(m_front, m_worldup));
 	m_up = glm::normalize(glm::cross(m_right, m_front));
+
+	// Update View
+	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
+}
+
+void vectorial_camera::update_cam_vectors(vec3 front)
+{
+	// Recompute Front
+	m_front = glm::normalize(front);
+
+	// Recompute Right and Up
+	m_right = glm::normalize(glm::cross(m_front, m_worldup));
+	m_up = glm::normalize(glm::cross(m_right, m_front));
+
+	// Update View
+	m_view = glm::lookAt(m_eye, m_eye + m_front, m_up);
 }

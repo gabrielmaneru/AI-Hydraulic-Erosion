@@ -28,8 +28,8 @@ bool c_renderer::init()
 		texture_shader = new Shader_Program("resources/shaders/texture.vert", "resources/shaders/texture.frag");
 		basic_shader = new Shader_Program("resources/shaders/basic.vert", "resources/shaders/color.frag");
 		layer_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/layer.frag");
-		layer_mesh_shader = new Shader_Program("resources/shaders/layer.vert", "resources/shaders/color.frag");
 		gradient_shader = new Shader_Program("resources/shaders/basic.vert", "resources/shaders/gradient.frag");
+		water_shader = new Shader_Program("resources/shaders/water.vert", "resources/shaders/water.frag");
 	}
 	catch (const std::string & log) { std::cout << log; return false; }
 
@@ -38,6 +38,7 @@ bool c_renderer::init()
 	scene_cam.m_yaw = -90.0f;
 	scene_cam.m_pitch = -40.0f;
 	scene_cam.update_cam_vectors();
+
 
 	ortho_cam.view_rect = {-0.5f, 0.5f, -0.5f, 0.5f};
 	ortho_cam.update();
@@ -51,20 +52,27 @@ bool c_renderer::init()
 void c_renderer::update()
 {
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
 
 	// Camera Update
 	scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
-	mat4 mvp;
+
+	invert_cam.m_eye = vec3(scene_cam.m_eye.x, m_generator.m_water_height + glm::reflect(scene_cam.m_eye - vec3(0.0f, m_generator.m_water_height, 0.0f), {0.0f, 1.0f, 0.0f}).y, scene_cam.m_eye.z);
+	invert_cam.update_cam_vectors(glm::reflect(scene_cam.m_front, { 0.0f, 1.0f, 0.0f }));
+	mat4 m;
+	mat4 vp;
 
 	switch (m_generator.step)
 	{
 	case s_select_noise_map:
 		{// Draw Mesh
-			mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_generator.display_scale, m_generator.display_scale/4, m_generator.display_scale });
+			m = glm::scale(mat4(1.0f), { m_generator.m_map_scale, m_generator.m_map_scale / 4, m_generator.m_map_scale });
+			vp = scene_cam.m_proj * scene_cam.m_view;
 			basic_shader->use();
-			basic_shader->set_uniform("MVP", mvp);
+			basic_shader->set_uniform("Model", m);
+			basic_shader->set_uniform("VP", vp);
 			basic_shader->set_uniform("base_color", vec4{ 1.0f, 0.0f, 1.0f, 1.0f });
 			// Draw Scene
 			GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -91,42 +99,108 @@ void c_renderer::update()
 
 	case s_apply_layers:
 		{// Draw Terrain
-			mvp = scene_cam.m_proj * scene_cam.m_view * glm::scale(mat4(1.0f), { m_generator.display_scale, 1.0f, m_generator.display_scale });
+			m = glm::scale(mat4(1.0f), { m_generator.m_map_scale, 1.0f, m_generator.m_map_scale });
+			vp = scene_cam.m_proj * scene_cam.m_view;
 			layer_shader->use();
-			layer_shader->set_uniform("MVP", mvp);
-			m_generator.set_uniforms(layer_shader, generator::e_shader::e_color_mesh);
+			layer_shader->set_uniform("MVP", vp*m);
+			m_generator.set_uniforms(layer_shader, generator::e_shader::e_layer_color);
 
 			// Draw Scene
 			GL_CALL(glEnable(GL_DEPTH_TEST));
-			GL_CALL(glBindVertexArray(m_generator.m_layer_mesh.m_vao));
+			GL_CALL(glBindVertexArray(m_generator.m_layered_mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_layer_mesh.faces.size(), GL_UNSIGNED_INT, 0));
-		}
-		{// Draw Terrain Mesh
-			layer_mesh_shader->use();
-			layer_mesh_shader->set_uniform("MVP", mvp);
-			layer_mesh_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-			m_generator.set_uniforms(layer_mesh_shader, generator::e_shader::e_mesh);
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_layered_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+
+			// Draw Water
+			water_shader->use();
+			water_shader->set_uniform("useColor", true);
+			water_shader->set_uniform("VP", vp);
+			m_generator.set_uniforms(water_shader, generator::e_shader::e_water);
+			GL_CALL(glBindVertexArray(quad.vao));
+			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+			GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+
+			// Draw Terrain Mesh
+			layer_shader->use();
+			layer_shader->set_uniform("MVP", vp*m);
+			m_generator.set_uniforms(layer_shader, generator::e_shader::e_layer_mesh);
+			GL_CALL(glBindVertexArray(m_generator.m_layered_mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_layer_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_layered_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			GL_CALL(glDisable(GL_DEPTH_TEST));
 		}
 		break;
 
 	case s_rasterization:
 	{// Draw Mesh
-		mvp = scene_cam.m_proj * scene_cam.m_view;
+		vp = scene_cam.m_proj * scene_cam.m_view;
 		gradient_shader->use();
-		gradient_shader->set_uniform("MVP", mvp);
+		gradient_shader->set_uniform("Model", mat4(1.0f));
+		gradient_shader->set_uniform("VP", vp);
 		gradient_shader->set_uniform("dim", 3);
+		gradient_shader->set_uniform("doClip", true);
+		gradient_shader->set_uniform("clip_normal", vec4(0.0f, 1.0f, 0.0f, -m_generator.m_water_height));
 		GL_CALL(glActiveTexture(GL_TEXTURE0));
-		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized_txt.m_id));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized_texture.m_id));
 		
-		// Draw Scene
 		GL_CALL(glEnable(GL_DEPTH_TEST));
+		GL_CALL(glEnable(GL_CLIP_DISTANCE0));
+
+		// Draw Scene
 		GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
 		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
 		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+
+
+		// Draw Water
+		{
+			// Bind Refraction
+			GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_generator.m_refraction.m_fbo));
+			GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+			GL_CALL(glViewport(0, 0, m_generator.m_refraction.m_width, m_generator.m_refraction.m_height));
+			// Draw Refraction
+			gradient_shader->set_uniform("clip_normal", vec4(0.0f, -1.0f, 0.0f, m_generator.m_water_height));
+			GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			gradient_shader->set_uniform("VP", vp);
+			// Bind Reflection
+			GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_generator.m_reflection.m_fbo));
+			GL_CALL(glClearColor(0.8f, 0.7f, 0.7f, 1.0f));
+			GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+			GL_CALL(glViewport(0, 0, m_generator.m_reflection.m_width, m_generator.m_reflection.m_height));
+			// Move Camera
+			gradient_shader->set_uniform("VP", scene_cam.m_proj * invert_cam.m_view);
+			// Draw Reflection
+			gradient_shader->set_uniform("clip_normal", vec4(0.0f, 1.0f, 0.0f, -m_generator.m_water_height));
+			GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDisable(GL_CLIP_DISTANCE0));
+
+
+			GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+			GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
+			water_shader->use();
+			water_shader->set_uniform("VP", vp);
+			water_shader->set_uniform("useColor", false);
+			water_shader->set_uniform("base_color", m_generator.m_wcolor);
+			water_shader->set_uniform("reflect_factor", m_generator.m_reflect_factor);
+			water_shader->set_uniform("color_factor", m_generator.m_wcolor_factor);
+			water_shader->set_uniform("win_width", (float)window_manager->get_width());
+			water_shader->set_uniform("win_height", (float)window_manager->get_height());
+			water_shader->set_uniform_sampler("reflection_texture", 0);
+			water_shader->set_uniform_sampler("refraction_texture", 1);
+			m_generator.set_uniforms(water_shader, generator::e_shader::e_water);
+			GL_CALL(glActiveTexture(GL_TEXTURE0));
+			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_reflection.m_color_texture))
+			GL_CALL(glActiveTexture(GL_TEXTURE1));
+			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_refraction.m_color_texture));
+			GL_CALL(glBindVertexArray(quad.vao));
+			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+			GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+			GL_CALL(glDisable(GL_DEPTH_TEST));
+		}
 	}
 		break;
 	default:

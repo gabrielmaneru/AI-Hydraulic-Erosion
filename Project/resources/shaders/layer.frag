@@ -12,10 +12,18 @@ uniform LevelData levels[MAX_LEVELS];
 uniform int active_levels;
 uniform float blend_factor;
 
+uniform vec4 base_color;
+uniform bool useColor;
+
 out vec4 out_color;
 
 void main()
 {
+	if(useColor)
+	{
+		out_color = base_color;
+		return;
+	}
 	vec3 level_color;
 	for(int i = 0; i < active_levels; i++)
 	{

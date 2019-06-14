@@ -1,5 +1,7 @@
 #pragma once
 #include "noise_texture.h"
+#include "framebuffer.h"
+#include "eroder.h"
 
 constexpr int s_select_noise_map = 0;
 constexpr int s_apply_layers = 1;
@@ -8,13 +10,28 @@ constexpr int s_rasterization = 2;
 class Shader_Program;
 struct generator
 {
+	// Noiser
 	noise_texture m_noise;
-	raw_mesh m_layer_mesh;
+
+	// Layer
+	raw_mesh m_layered_mesh;
 	raw_mesh m_rasterized_mesh;
-	raw_texture_rgb m_rasterized_txt;
-	float display_scale{ 2000.0f };
-	float blend_factor{ 0.75f };
-	float terrain_slope{ 0.75f };
+	raw_texture_rgb m_rasterized_texture;
+	float m_map_scale{ 2000.0f };
+	float m_blend_factor{ 0.75f };
+	float m_terrain_slope{ 0.75f };
+	float m_water_height{ 50.0f };
+
+	// Water
+	float m_reflect_factor{ 0.55f };
+	float m_wcolor_factor{ 0.45f };
+	vec3 m_wcolor{ 0.12f, 0.45f, 0.50f };
+	framebuffer m_reflection;
+	framebuffer m_refraction;
+
+	// Eroder
+	eroder m_eroder;
+	int m_iterations = 10;
 
 	struct level
 	{
@@ -32,7 +49,7 @@ struct generator
 
 	void init();
 	void update();
-	enum class e_shader {e_color_mesh, e_mesh, e_raster};
+	enum class e_shader {e_layer_color, e_layer_mesh, e_water};
 	void set_uniforms(Shader_Program* shader_p, e_shader shader_type);
 	void draw_gui();
 

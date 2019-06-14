@@ -9,13 +9,15 @@ class c_renderer
 	Shader_Program* texture_shader;
 	Shader_Program* basic_shader;
 	Shader_Program* layer_shader;
-	Shader_Program* layer_mesh_shader;
 	Shader_Program* gradient_shader;
+	Shader_Program* water_shader;
 
 	// Cameras
 	vectorial_camera scene_cam;
+	vectorial_camera invert_cam;
 	ortho_camera ortho_cam;
 
+	// Scene
 	generator m_generator;
 
 public:
@@ -23,5 +25,6 @@ public:
 	void update();
 	void shutdown();
 	friend class c_editor;
+	friend struct generator;
 };
 extern c_renderer* renderer;

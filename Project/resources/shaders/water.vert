@@ -1,11 +1,19 @@
 #version 440
 in vec3 attr_pos;
-uniform mat4 MVP;
-uniform float dt;
-out float vtx_height;
+in vec2 attr_uvs;
+in vec3 attr_norm;
 
+uniform mat4 Model;
+uniform mat4 VP;
+uniform bool doClip = false;
+uniform vec4 clip_normal;
+
+out vec2 uv;
 void main()
 {
-	float extra_height = 5*(sin(attr_pos.x+dt) + cos(dt) + sin(5*(dt+attr_pos.z)));
-	gl_Position = MVP * vec4(attr_pos.x, attr_pos.y+extra_height, attr_pos.z, 1.0);
+	vec4 wPos = Model * vec4(attr_pos, 1.0);
+	if(doClip)
+		gl_ClipDistance[0] = dot(clip_normal,wPos);
+	uv = attr_uvs;
+	gl_Position = VP * wPos;
 }

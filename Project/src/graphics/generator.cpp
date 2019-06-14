@@ -2,6 +2,7 @@
 #include "shader_program.h"
 #include <utils/generate_noise.h>
 #include <imgui/imgui.h>
+#include "renderer.h"
 
 void generator::init()
 {
@@ -14,11 +15,13 @@ void generator::update()
 
 void generator::set_uniforms(Shader_Program * shader_p, e_shader shader_type)
 {
-	if (shader_type == e_shader::e_color_mesh || shader_type == e_shader::e_mesh)
+	switch (shader_type)
 	{
+	case generator::e_shader::e_layer_color:
+	case generator::e_shader::e_layer_mesh:
 		for (int i = 0; i < levels.size(); ++i)
 		{
-			if(shader_type == e_shader::e_color_mesh)
+			if(shader_type == e_shader::e_layer_color)
 				shader_p->set_uniform(("levels[" + std::to_string(i) + "].color").c_str(), levels[i].color);
 			shader_p->set_uniform(("levels[" + std::to_string(i) + "].txt_height").c_str(), levels[i].txt_height);
 			shader_p->set_uniform(("levels[" + std::to_string(i) + "].real_height").c_str(), levels[i].real_height);
@@ -26,18 +29,30 @@ void generator::set_uniforms(Shader_Program * shader_p, e_shader shader_type)
 		assert(levels.size() <= 10);
 
 		shader_p->set_uniform("active_levels", (int)levels.size());
-		shader_p->set_uniform("terrain_slope", terrain_slope);
+		shader_p->set_uniform("terrain_slope", m_terrain_slope);
 
-		if (shader_type == e_shader::e_mesh)
+		if (shader_type == e_shader::e_layer_mesh)
 		{
-			shader_p->set_uniform("z_off", 0.01f);
+			shader_p->set_uniform("useColor", true);
+			shader_p->set_uniform("base_color", vec4(0.0f, 0.0f, 0.0f, 1.0f));
+			shader_p->set_uniform("z_off", 0.00001f);
 		}
 		else
 		{
-			shader_p->set_uniform("blend_factor", blend_factor);
+			shader_p->set_uniform("useColor", false);
+			shader_p->set_uniform("blend_factor", m_blend_factor);
 			shader_p->set_uniform("z_off", 0.00f);
 		}
-
+		break;
+	case generator::e_shader::e_water:
+		mat4 mtx{ 1.0f };
+		mtx = glm::translate(mtx, { 0.0f, m_water_height, 0.0f });
+		mtx = glm::rotate(mtx, -glm::pi<float>() / 2, { 1.0f, 0.0f, 0.0f });
+		mtx = glm::scale(mtx, vec3(m_map_scale));
+		shader_p->set_uniform("Model", mtx);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -67,13 +82,14 @@ void generator::draw_gui()
 				m_noise.generate();
 
 			ImGui::InputUInt("Resolution", &m_noise.post_resolution);
-			ImGui::InputFloat("Scale", &display_scale);
+			ImGui::InputFloat("Scale", &m_map_scale);
 		}
 		break;
 	case s_apply_layers:
 		{
-			ImGui::SliderFloat("Blendfactor", &blend_factor, -2.0f, 2.0f);
-			ImGui::SliderFloat("Slope", &terrain_slope, 0.0f, 3.0f);
+			ImGui::SliderFloat("Blendfactor", &m_blend_factor, -2.0f, 2.0f);
+			ImGui::SliderFloat("Slope", &m_terrain_slope, 0.0f, 3.0f);
+			ImGui::SliderFloat("Water Level", &m_water_height, 0.0f, this->levels[0].real_height);
 			for (int i = 0; i < levels.size(); ++i)
 			{
 				if (ImGui::TreeNode(("Layer_" + std::to_string(i)).c_str()))
@@ -86,20 +102,25 @@ void generator::draw_gui()
 			}
 		}
 		break;
+	case s_rasterization:
+		{
+			ImGui::SliderInt("Iterations", &m_iterations, 1, glm::max(m_iterations * 2, 10));
+			if (ImGui::Button("Erode"))
+				m_eroder.erode(m_rasterized_mesh, m_iterations);
+		}
+		break;
 	default:
 		break;
 	}
-		
-		
 }
 
 void generator::rasterize_mesh()
 {
-	m_rasterized_mesh.faces = m_layer_mesh.faces;
-	m_rasterized_mesh.vertices = m_layer_mesh.vertices;
-	m_rasterized_mesh.uv_coord.resize(m_layer_mesh.vertices.size());
-	m_rasterized_txt.setup(m_noise.resolution, m_noise.resolution);
-	m_rasterized_txt.clear({});
+	m_rasterized_mesh.faces = m_layered_mesh.faces;
+	m_rasterized_mesh.vertices = m_layered_mesh.vertices;
+	m_rasterized_mesh.uv_coord.resize(m_layered_mesh.vertices.size());
+	m_rasterized_texture.setup(m_noise.resolution, m_noise.resolution);
+	m_rasterized_texture.clear({});
 
 	for (size_t y = 0; y < m_noise.resolution; y++)
 		for (size_t x = 0; x < m_noise.resolution; x++)
@@ -132,16 +153,16 @@ void generator::rasterize_mesh()
 				level_ratio = (value - prev_level) / level_size;
 
 			// Curve it
-			level_ratio = 1 - pow(1 - level_ratio, terrain_slope);
+			level_ratio = 1 - pow(1 - level_ratio, m_terrain_slope);
 
 			// Compute uvs
 			uv.x = map(vertex.x, -0.5f, 0.5f, 0.0f, 1.0f);
 			uv.y = map(vertex.z, 0.5f, -0.5f, 0.0f, 1.0f);
 
 			// Compute real height
-			vertex.x *= display_scale;
+			vertex.x *= m_map_scale;
 			vertex.y = acc + levels[current].real_height * level_ratio;
-			vertex.z *= display_scale;
+			vertex.z *= m_map_scale;
 
 			vec3 level_color = levels[current].color;
 
@@ -153,20 +174,20 @@ void generator::rasterize_mesh()
 				post = levels[current].txt_height;
 
 			float factor = (value - prev) / (post - prev);
-			if (factor < blend_factor && current > 0)
+			if (factor < m_blend_factor && current > 0)
 			{
-				level_color += (levels[current - 1].color - level_color) * ((blend_factor - factor) / (blend_factor * 2));
+				level_color += (levels[current - 1].color - level_color) * ((m_blend_factor - factor) / (m_blend_factor * 2));
 			}
-			if ((1 - factor) < blend_factor && (current < levels.size() - 1))
+			if ((1 - factor) < m_blend_factor && (current < levels.size() - 1))
 			{
-				level_color += (levels[current + 1].color - level_color) * ((blend_factor - (1 - factor)) / (blend_factor * 2));
+				level_color += (levels[current + 1].color - level_color) * ((m_blend_factor - (1 - factor)) / (m_blend_factor * 2));
 			}
 
-			m_rasterized_txt.set(x, y, level_color);
+			m_rasterized_texture.set(x, y, level_color);
 		}
 	m_rasterized_mesh.compute_terrain_normals();
 	m_rasterized_mesh.load();
-	m_rasterized_txt.load();
+	m_rasterized_texture.load();
 }
 
 void generator::enter_step()
@@ -181,6 +202,8 @@ void generator::enter_step()
 		break;
 	case s_rasterization:
 		rasterize_mesh();
+		m_reflection.setup(1920, 1080);
+		m_refraction.setup(1920, 1080);
 		break;
 	default:
 		break;
@@ -194,7 +217,7 @@ void generator::exit_step()
 	case s_select_noise_map:
 		m_noise.resolution = m_noise.post_resolution;
 		m_noise.generate();
-		m_layer_mesh = m_noise.m_naive_mesh;
+		m_layered_mesh = m_noise.m_naive_mesh;
 		m_noise.m_naive_mesh = {};
 		break;
 	case s_apply_layers:

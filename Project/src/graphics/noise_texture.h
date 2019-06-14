@@ -12,8 +12,8 @@ struct noise_texture
 	size_t prev_resolution{ 128u };
 	size_t post_resolution{ 1024u };
 	int iterations{8};
-	float noise_scale{ 7.5f };
+	float noise_scale{ 10.0f };
 	float persistance{0.50f};
 	float lacunarity{2.0f};
-	float falloff{ 10.0f };
+	float falloff{ 2.0f };
 };
