@@ -166,6 +166,7 @@
     <ClCompile Include="src\platform\window_manager.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
     <ClCompile Include="src\utils\generate_noise.cpp" />
+    <ClCompile Include="src\utils\math_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependencies\include\GLFW\glfw3.h" />

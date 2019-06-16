@@ -105,8 +105,18 @@ void generator::draw_gui()
 	case s_rasterization:
 		{
 			ImGui::SliderInt("Iterations", &m_iterations, 1, glm::max(m_iterations * 2, 10));
-			if (ImGui::Button("Erode"))
+			ImGui::Checkbox("Eroding", &m_eroding);
+			if(m_eroding)
 				m_eroder.erode(m_rasterized_mesh, m_iterations);
+			if (ImGui::Button("Reset"))
+				rasterize_mesh();
+			ImGui::InputFloat("Inertia", &m_eroder.inertia);
+			ImGui::InputFloat("Sediment Factor", &m_eroder.sediment_factor);
+			ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
+			ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
+			ImGui::InputFloat("Evaporate Factor", &m_eroder.erode_factor);
+			ImGui::InputFloat("Gravity", &m_eroder.gravity);
+			ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
 		}
 		break;
 	default:
@@ -204,6 +214,7 @@ void generator::enter_step()
 		rasterize_mesh();
 		m_reflection.setup(1920, 1080);
 		m_refraction.setup(1920, 1080);
+		m_eroder.initialize(m_rasterized_mesh);
 		break;
 	default:
 		break;

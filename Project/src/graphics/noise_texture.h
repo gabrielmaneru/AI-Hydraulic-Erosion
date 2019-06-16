@@ -10,7 +10,11 @@ struct noise_texture
 
 	size_t resolution;
 	size_t prev_resolution{ 128u };
+#ifdef _DEBUG
+	size_t post_resolution{ 32u };
+#else
 	size_t post_resolution{ 1024u };
+#endif // _DEBUG
 	int iterations{8};
 	float noise_scale{ 10.0f };
 	float persistance{0.50f};

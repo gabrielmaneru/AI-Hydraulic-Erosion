@@ -31,7 +31,8 @@ struct generator
 
 	// Eroder
 	eroder m_eroder;
-	int m_iterations = 10;
+	bool m_eroding{ false };
+	int m_iterations{ 10 };
 
 	struct level
 	{

@@ -14,3 +14,5 @@ R map(T value, T in_min, T in_max, R out_min, R out_max)
 {
 	return lerp(out_min, out_max, coef(in_min, in_max, value));
 }
+int round_float(const float & value);
+int floor_float(const float & value);
