@@ -5,7 +5,7 @@
 void vectorial_camera::update(float xOff, float yOff)
 {
 	constexpr float MOUSE_SENSITIVITY{ 0.2f };
-	constexpr float MOUSE_SPEED{ 0.05f };
+	constexpr float MOUSE_SPEED{ 0.5f };
 
 	// Check for Mouse Imput
 	if (window::mouse_but_right_pressed)

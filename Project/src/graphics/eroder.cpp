@@ -51,12 +51,12 @@ void eroder::erode(raw_mesh & mesh, int iterations)
 	for (int i = 0; i < iterations; i++)
 	{
 		// Create a water droplet
-		float posX = map(rand(), 0, RAND_MAX, 2.0f, (float)(scale-2));
-		float posY = map(rand(), 0, RAND_MAX, 2.0f, (float)(scale-2));
-		vec2  dir{ 0.0f };
-		float speed = 1.0f;
-		float water = 1.0f;
-		float sediment = 0;
+		 posX =  map(rand(), 0, RAND_MAX, 2.0f, (float)(scale - 2));
+		 posY =  map(rand(), 0, RAND_MAX, 2.0f, (float)(scale - 2));
+		 dir=vec2{ 0.0f };
+		 speed = 1.0f;
+		 water = 1.0f;
+		 sediment = 0;
 
 		auto compute_gradient = [&]()->vec2
 		{
@@ -85,17 +85,18 @@ void eroder::erode(raw_mesh & mesh, int iterations)
 			float heightNE = mesh.vertices[nodeIndexNW + 1].y;
 			float heightSW = mesh.vertices[nodeIndexNW + scale].y;
 			float heightSE = mesh.vertices[nodeIndexNW + scale + 1].y;
-			return heightNW * (1 - x) * (1 - y) + heightNE * x * (1 - y) + heightSW * (1 - x) * y + heightSE * x * y;
+			float h = heightNW * (1 - x) * (1 - y) + heightNE * x * (1 - y) + heightSW * (1 - x) * y + heightSE * x * y;
+			return h * scale/ 2000.f;
 		};
 
 		for (int lifetime = 0; lifetime < max_lifetime; lifetime++)
 		{
 			// Round position
-			int idxX = round_float(posX);
-			int idxY = round_float(posY);
-			int idxDrop = idxY * scale + idxX;
-			float offsetX = posX - idxX;
-			float offsetY = posY - idxY;
+			int nodeX = round_float(posX);
+			int nodeY = round_float(posY);
+			int dropletIndex = nodeY * scale + nodeX;
+			float cellOffestX = posX - nodeX;
+			float cellOffsetY = posY - nodeY;
 
 			// Update direction using gradient
 			vec2 gradient = compute_gradient();
@@ -128,28 +129,32 @@ void eroder::erode(raw_mesh & mesh, int iterations)
 			{
 				if (sediment > 0.0f)
 				{
-					float to_deposit = ((d_height > 0)? glm::min(d_height, sediment): (sediment - sediment_capacity))*deposit_factor;
+					float to_deposit;
+					if (d_height > 0)
+						to_deposit = glm::min(d_height, sediment);
+					else
+						to_deposit = (sediment - sediment_capacity) *deposit_factor;
 
 					sediment -= to_deposit;
 
-					mesh.vertices[idxDrop].y += to_deposit * (1 - offsetX)*(1 - offsetY);
-					mesh.vertices[idxDrop + 1].y += to_deposit * offsetX*(1 - offsetY);
-					mesh.vertices[idxDrop + scale].y += to_deposit * (1 - offsetX)*offsetY;
-					mesh.vertices[idxDrop + scale + 1].y += to_deposit * offsetX*offsetY;
+					mesh.vertices[dropletIndex].y += to_deposit * (1 - cellOffestX)*(1 - cellOffsetY);
+					mesh.vertices[dropletIndex + 1].y += to_deposit * cellOffestX*(1 - cellOffsetY);
+					mesh.vertices[dropletIndex + scale].y += to_deposit * (1 - cellOffestX)*cellOffsetY;
+					mesh.vertices[dropletIndex + scale + 1].y += to_deposit * cellOffestX*cellOffsetY;
 				}
 			}
 			else
 			{
 				float to_erode = glm::min((sediment_capacity - sediment)*erode_factor, -d_height);
 
-				brush& b = m_erosion_brushes[idxDrop];
+				brush& b = m_erosion_brushes[dropletIndex];
 				for (int index = 0; index < b.idx.size(); index++)
 				{
 					int vtx_index = b.idx[index];
 					float amount = to_erode * b.weight[index];
 
 					float d_sediment = glm::min(mesh.vertices[vtx_index].y, amount);
-					mesh.vertices[idxDrop].y -= d_sediment;
+					mesh.vertices[dropletIndex].y -= d_sediment;
 					sediment += d_sediment;
 				}
 			}
