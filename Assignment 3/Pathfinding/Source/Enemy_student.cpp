@@ -48,35 +48,41 @@ void Enemy::FieldOfView(float angle, float closeDistance, float occupancyValue)
 		(g_blackboard.GetTerrainAnalysisType() != TerrainAnalysis_HideAndSeek))
 		return;
 
-	//for (int r = 0; r < g_terrain.GetWidth(); r++)
-	//	for (int c = 0; c < g_terrain.GetWidth(); c++)
-	//		if(g_terrain.GetInfluenceMapValue(r, c) < 0.0f)
-	//			g_terrain.SetInfluenceMapValue(r, c, 0.0f);
+	for (int r = 0; r < g_terrain.GetWidth(); r++)
+		for (int c = 0; c < g_terrain.GetWidth(); c++)
+			if(g_terrain.GetInfluenceMapValue(r, c) < 0.0f)
+				g_terrain.InitialOccupancyMap(r, c, 0.0f);
 
 	D3DXVECTOR3 enemy_pos = m_owner->GetBody().GetPos();
 	int enemy[2];
 	g_terrain.GetRowColumn(&enemy_pos, enemy, enemy + 1);
 	D3DXVECTOR3 enemy_dir = m_owner->GetBody().GetDir();
+	D3DXVec3Normalize(&enemy_dir, &enemy_dir);
+	const float dot_angle = cosf(D3DXToRadian(angle/2));
 
 	for (int r = 0; r < g_terrain.GetWidth(); r++)
 		for (int c = 0; c < g_terrain.GetWidth(); c++)
 			if (g_terrain.IsClearPath(enemy[0], enemy[1], r, c))
 			{
 				// Compute difference Tile/Enemy
-				vec3 delta = g_terrain.GetCoordinates(r, c) - enemy_pos;
+				vec3 delta = g_terrain.GetCoordinates(r, c) - g_terrain.GetCoordinates(enemy[0], enemy[1]);
 				
 				// Compute Distance
-				float dist = D3DXVec3Length(&delta);
+				float dist = sqrtf(powf(r-enemy[0],2.0f)+ powf(c - enemy[1], 2.0f));
+				if (dist < closeDistance)
+				{
+					g_terrain.InitialOccupancyMap(r, c, occupancyValue);
+					continue;
+				}
 
 				// Compute Angle
 				D3DXVec3Normalize(&delta, &delta);
 				float dot_p = D3DXVec3Dot(&delta, &enemy_dir);
 
 				// Set Value
-				if (dot_p > cosf(angle) || dist < closeDistance)
-					g_terrain.SetInfluenceMapValue(r, c, occupancyValue);
+				if (dot_p > dot_angle)
+					g_terrain.InitialOccupancyMap(r, c, occupancyValue);
 			}
-
 }
 
 bool Enemy::FindPlayer(void)
@@ -133,7 +139,7 @@ bool Enemy::SeekPlayer(void)
 		std::pair<int, int> closer = tiles[0];
 
 		// Find any closer pair
-		for (int i = 1; i < tiles.size(); i++)
+		for (size_t i = 1; i < tiles.size(); i++)
 		{
 			vec3 delta = g_terrain.GetCoordinates(tiles[i].first, tiles[i].second) - enemy_pos;
 			float dist = D3DXVec3Length(&delta);
@@ -143,8 +149,8 @@ bool Enemy::SeekPlayer(void)
 
 		// Set as Target
 		ChangeGoal(closer.first, closer.second);
+		return true;
 	}
 	else
 		return false;
-
 }

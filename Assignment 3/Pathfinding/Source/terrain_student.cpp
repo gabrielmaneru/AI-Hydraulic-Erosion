@@ -150,7 +150,7 @@ void Terrain::AnalyzeSearch(void)
 				D3DXVec3Normalize(&dir, &dir);
 				float dot_p = D3DXVec3Dot(&dir, &m_dirPlayer);
 				if (dot_p > 0.0f)
-					m_terrainInfluenceMap[r][c] = 1.0f;
+					InitialOccupancyMap(r,c,1.0f);
 			}
 }
 
@@ -251,7 +251,7 @@ void Terrain::Propagation(float decay, float growing, bool computeNegativeInflue
 
 	for (int r = 0; r < m_width; r++)
 		for (int c = 0; c < m_width; c++)
-			m_terrainInfluenceMap[r][c] = temp_layer[r * m_width + c];
+			InitialOccupancyMap(r,c,temp_layer[r * m_width + c]);
 }
 
 void Terrain::NormalizeOccupancyMap(bool computeNegativeInfluence)

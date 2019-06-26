@@ -268,30 +268,32 @@ a_star::node a_star::find_node_minimum_cost()
 bool a_star::is_flag(e_Flag f)
 {
 	// flag fast check
-	return static_cast<bool>(m_flags & f);
+	return (m_flags & f) != 0;
 }
 
 float a_star::compute_heuristic(const coord & c)
 {
 	// compute differential
 	coord delta = c - coord(m_goal);
+	float dx = static_cast<float>(delta.r);
+	float dy = static_cast<float>(delta.c);
 
 	// Apply selected algorithm
 	float value;
 	switch (m_heuristic_method)
 	{
 	case 0: // Euclidean
-		value = sqrtf(delta.r * delta.r + delta.c * delta.c);
+		value = sqrtf(dx * dx + dy * dy);
 		break;
 	case 1: // Octile
-		value = min(fabsf(delta.r), fabsf(delta.c)) * sqrtf(2.0f)
-		+ max(fabsf(delta.r), fabsf(delta.c)) - min(fabsf(delta.r), fabsf(delta.c));
+		value = min(fabsf(dx), fabsf(dy)) * sqrtf(2.0f)
+		+ max(fabsf(dx), fabsf(dy)) - min(fabsf(dx), fabsf(dy));
 		break;
 	case 2: // Chebyshev
-		value = max(fabsf(delta.r), fabsf(delta.c));
+		value = max(fabsf(dx), fabsf(dy));
 		break;
 	case 3: // Manhattan
-		value = fabsf(delta.r) + fabsf(delta.c);
+		value = fabsf(dx) + fabsf(dy);
 		break;
 	default:
 		break;
