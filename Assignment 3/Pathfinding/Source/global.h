@@ -11,13 +11,13 @@
 #pragma once
 
 /* uncomment the following for Project 3 */
-//#define PROJECT_THREE
+#define PROJECT_THREE
 
 /* uncomment the following for any extra credit */
 //#define EXTRACREDIT_ROYFLOYDWARSHALL
 //#define EXTRACREDIT_GOALBOUNDING
 //#define EXTRACREDIT_JPSPLUS
-#define EXTRACREDIT_FOGOFWAR
+//#define EXTRACREDIT_FOGOFWAR
 
 enum ExtraCredit
 {

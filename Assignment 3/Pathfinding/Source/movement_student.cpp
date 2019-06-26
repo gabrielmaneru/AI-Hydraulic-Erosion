@@ -33,6 +33,7 @@ bool Movement::ComputePath( int r, int c, bool newRequest )
 			if (m_rubberband)	flags |= a_star::e_rubberband;
 			if (m_straightline)	flags |= a_star::e_straightline;
 			if (m_singleStep)	flags |= a_star::e_singlestep;
+			if (m_debugDraw)	flags |= a_star::e_debug_draw;
 
 			if (m_pathfinder.initialize(m_owner->GetBody().GetPos(), m_goal, flags,m_heuristicWeight, m_heuristicCalc ))
 			{

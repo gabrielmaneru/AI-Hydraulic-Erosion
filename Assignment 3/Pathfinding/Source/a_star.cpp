@@ -239,7 +239,8 @@ bool a_star::is_clear_path(coord a, coord b)
 void a_star::insert_open_list(node && c)
 {
 	c.m_heuristic_cost = compute_heuristic(c.m_coord);
-	g_terrain.SetColor(c.m_coord.r, c.m_coord.c, DEBUG_COLOR_BLUE);
+	if (is_flag(a_star::e_debug_draw))
+		g_terrain.SetColor(c.m_coord.r, c.m_coord.c, DEBUG_COLOR_BLUE);
 	m_open_list.emplace_back(c);
 }
 
@@ -259,7 +260,8 @@ a_star::node a_star::find_node_minimum_cost()
 	node next_node = *minimum_cost;
 	m_open_list.erase(minimum_cost);
 	m_closed_list.emplace_back(next_node);
-	g_terrain.SetColor(next_node.m_coord.r, next_node.m_coord.c, DEBUG_COLOR_YELLOW);
+	if (is_flag(a_star::e_debug_draw))
+		g_terrain.SetColor(next_node.m_coord.r, next_node.m_coord.c, DEBUG_COLOR_YELLOW);
 	return next_node;
 }
 

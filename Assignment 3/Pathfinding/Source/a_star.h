@@ -9,6 +9,7 @@ public:
 		e_rubberband = 1 << 1,
 		e_straightline = 1 << 2,
 		e_singlestep = 1 << 3,
+		e_debug_draw = 1 << 4,
 	};
 	bool initialize(vec3 start, vec3 goal, int flags, float heuristicWeight, int heuristicMethod);
 	bool iterate();
