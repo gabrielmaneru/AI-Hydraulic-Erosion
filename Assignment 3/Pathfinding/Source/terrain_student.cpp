@@ -225,12 +225,12 @@ void Terrain::Propagation(float decay, float growing, bool computeNegativeInflue
 	for (int r = 0; r < m_width; r++)
 		for (int c = 0; c < m_width; c++)
 		{
+			vec3 orig = GetCoordinates(r, c);
 			float highest_value{0.0f};
 			for (int rn = max(r - 1, 0); rn < min(r + 2, m_width); rn++)
 				for (int cn = max(c - 1, 0); cn < min(c + 2, m_width); cn++)
-					if (rn != r || cn != c)
+					if ((rn != r || cn != c) && IsClearPath(r,c,rn,cn))
 					{
-						vec3 orig = GetCoordinates(r, c);
 						vec3 neig = GetCoordinates(rn,cn);
 						D3DXVECTOR3 delta = neig - orig;
 						float dist = D3DXVec3Length(&delta);
@@ -246,7 +246,10 @@ void Terrain::Propagation(float decay, float growing, bool computeNegativeInflue
 								highest_value = decayed_val;
 						}
 					}
-			temp_layer[r * m_width + c] = Lerp(m_terrainInfluenceMap[r][c], highest_value, growing);
+			if (!computeNegativeInfluence && m_terrainInfluenceMap[r][c] < 0.0f)
+				temp_layer[r * m_width + c] = m_terrainInfluenceMap[r][c];
+			else
+				temp_layer[r * m_width + c] = Lerp(m_terrainInfluenceMap[r][c], highest_value, growing);
 		}
 
 	for (int r = 0; r < m_width; r++)
@@ -283,11 +286,12 @@ void Terrain::NormalizeOccupancyMap(bool computeNegativeInfluence)
 			float value = m_terrainInfluenceMap[r][c];
 			if (value < 0.0f)
 			{
-				if (computeNegativeInfluence)
-					m_terrainInfluenceMap[r][c] /= fabsf(min_value);
+				if (computeNegativeInfluence && min_value < 0.0f)
+					value /= -min_value;
 			}
-			else
-				m_terrainInfluenceMap[r][c] /= max_value;
+			else if(max_value > 0.0f)
+				value /= max_value;
+			InitialOccupancyMap(r, c, value);
 		}
 
 

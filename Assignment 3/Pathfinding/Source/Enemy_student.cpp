@@ -99,7 +99,8 @@ bool Enemy::FindPlayer(void)
 	int player[]{ g_blackboard.GetRowPlayer(), g_blackboard.GetColPlayer() };
 	if (g_terrain.GetInfluenceMapValue(player[0], player[1]) < 0.0f)
 	{
-		ChangeGoal(player[0], player[1]);
+		if(m_rowGoal != player[0] || m_colGoal != player[1])
+			ChangeGoal(player[0], player[1]);
 		return true;
 	}
 	return false;
