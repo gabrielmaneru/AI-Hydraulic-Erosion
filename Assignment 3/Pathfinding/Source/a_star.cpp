@@ -5,6 +5,7 @@ bool a_star::initialize(vec3 start, vec3 goal, int flags, float heuristicWeight,
 {
 	// Set input data
 	m_goal = goal;
+	m_start = start;
 	m_flags = flags;
 	m_heuristic_weight = heuristicWeight;
 	m_heuristic_method = heuristicMethod;
@@ -17,9 +18,10 @@ bool a_star::initialize(vec3 start, vec3 goal, int flags, float heuristicWeight,
 		m_waypoints.push_back(m_goal);
 		return true;
 	}
-	
+
 	// Insert initial node
-	insert_open_list(node{ c_start, utils.c_root, 0.0f });
+	insert_open_list(node{ c_start, coord::root(), 0.0f });
+	m_closed_list.resize(g_terrain.GetWidth()*g_terrain.GetWidth(), {});
 	return false;
 }
 
@@ -30,8 +32,7 @@ bool a_star::iterate()
 		// Check if is empty
 		if (m_open_list.empty())
 		{
-			if (m_closed_list.size() > 0)
-				m_waypoints.push_back(g_terrain.GetCoordinates(m_closed_list.begin()->m_coord.r, m_closed_list.begin()->m_coord.c));
+			m_waypoints.push_back(m_start);
 			return true;
 		}
 
@@ -65,15 +66,10 @@ void a_star::create_waypoint_list(node next_node)
 
 	// push parents recursively
 	m_waypoints.push_back(m_goal);
-	while (!(next_node.m_parent == utils.c_root))
+	while (!(next_node.m_parent == coord::root()))
 	{
 		m_waypoints.push_front(g_terrain.GetCoordinates(next_node.m_parent.r, next_node.m_parent.c));
-		for (auto it = m_closed_list.begin(); it != m_closed_list.end(); it++)
-			if (it->m_coord == next_node.m_parent)
-			{
-				next_node = *it;
-				break;
-			}
+		next_node = m_closed_list[next_node.m_parent.get_2d_coord()];
 	}
 
 	// Apply rubberbanding
@@ -189,18 +185,12 @@ void a_star::insert_possible_neighboors(const node & next_node)
 		float new_cost = next_node.m_movement_cost + n.cost;
 
 		// Check same node is already in closed list
-		std::list<node>::iterator copy_in_list = m_closed_list.end();
-		for (auto it = m_closed_list.begin(); it != m_closed_list.end(); it++)
-			if (it->m_coord == c_neighboor)
-			{
-				copy_in_list = it;
-				break;
-			}
-		if (copy_in_list != m_closed_list.end())
+		node& in_closed = m_closed_list[c_neighboor.get_2d_coord()];
+		if (in_closed.m_valid)
 			continue;
 
 		// Check same node is already in open list
-		copy_in_list = m_open_list.end();
+		auto copy_in_list = m_open_list.end();
 		for (auto it = m_open_list.begin(); it != m_open_list.end(); it++)
 			if (it->m_coord == c_neighboor)
 			{
@@ -246,8 +236,8 @@ void a_star::insert_open_list(node && c)
 
 a_star::node a_star::find_node_minimum_cost()
 {
-	// finde node of minimum cost
-	std::list<node>::iterator minimum_cost = m_open_list.begin();
+	// find node of minimum cost
+	std::vector<node>::iterator minimum_cost = m_open_list.begin();
 	float min_found = minimum_cost->m_heuristic_cost + minimum_cost->m_movement_cost;
 	for (auto it = minimum_cost; it != m_open_list.end(); it++)
 	{
@@ -259,7 +249,7 @@ a_star::node a_star::find_node_minimum_cost()
 	// take it out from the list
 	node next_node = *minimum_cost;
 	m_open_list.erase(minimum_cost);
-	m_closed_list.emplace_back(next_node);
+	m_closed_list[next_node.m_coord.get_2d_coord()] = next_node;
 	if (is_flag(a_star::e_debug_draw))
 		g_terrain.SetColor(next_node.m_coord.r, next_node.m_coord.c, DEBUG_COLOR_YELLOW);
 	return next_node;

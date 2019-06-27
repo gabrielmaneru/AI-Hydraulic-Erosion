@@ -1,5 +1,4 @@
 #pragma once
-
 using vec3 = D3DXVECTOR3;
 class a_star
 {
@@ -25,22 +24,26 @@ private:
 		coord operator+(const coord& other) const { return coord{ r + other.r, c + other.c }; }
 		coord operator-(const coord& other) const { return coord{ r - other.r, c - other.c }; }
 		bool is_wall() { return g_terrain.IsWall(r, c); }
+		size_t get_2d_coord() { return r*g_terrain.GetWidth() + c; }
 
 		int r,c;
+		static coord root() { return{ -1,-1 }; }
 	};
 	struct node
 	{
+		node()
+			:m_coord(coord::root()), m_parent(m_coord), m_valid(false) {}
 		node(const coord& c, const coord& p, float cost)
-			: m_coord(c), m_parent(p), m_movement_cost(cost) {}
-
+			: m_coord(c), m_parent(p), m_movement_cost(cost), m_valid(true) {}
+		
 		coord m_coord;
 		coord m_parent;
 		float m_heuristic_cost{0.0f};
 		float m_movement_cost;
+		bool m_valid;
 	};
 	const struct
 	{
-		coord c_root{ -1,-1 };
 		struct neighboor
 		{
 			neighboor(const coord& c, float f)
@@ -77,6 +80,7 @@ private:
 	int m_heuristic_method;
 	int m_flags;
 	vec3 m_goal;
-	std::list<node> m_open_list;
-	std::list<node> m_closed_list;
+	vec3 m_start;
+	std::vector<node> m_open_list;
+	std::vector<node> m_closed_list;
 };
