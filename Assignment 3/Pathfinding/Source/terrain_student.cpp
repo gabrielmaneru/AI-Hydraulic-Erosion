@@ -221,40 +221,56 @@ void Terrain::Propagation(float decay, float growing, bool computeNegativeInflue
 	//   Store the result to the temp layer
 	//
 	// Store influence value from temp layer
-	std::vector<float> temp_layer(static_cast<size_t>(m_width*m_width));
+
+	// Initialize Temporal layer
+	std::vector<float> temp_layer;
+	temp_layer.resize(m_width*m_width, 0.0f);
+
+	// Iterate over tiles
 	for (int r = 0; r < m_width; r++)
 		for (int c = 0; c < m_width; c++)
 		{
+			if (!computeNegativeInfluence && m_terrainInfluenceMap[r][c] < 0.0f)
+				continue;
+
 			vec3 orig = GetCoordinates(r, c);
 			float highest_value{0.0f};
+
 			for (int rn = max(r - 1, 0); rn < min(r + 2, m_width); rn++)
 				for (int cn = max(c - 1, 0); cn < min(c + 2, m_width); cn++)
-					if ((rn != r || cn != c) && IsClearPath(r,c,rn,cn))
-					{
-						vec3 neig = GetCoordinates(rn,cn);
-						D3DXVECTOR3 delta = neig - orig;
-						float dist = D3DXVec3Length(&delta);
-						float decayed_val = m_terrainInfluenceMap[rn][cn] * expf(-1.0f*dist*decay);
-						if (computeNegativeInfluence)
-						{
-							if (fabsf(decayed_val) > fabsf(highest_value))
-								highest_value = decayed_val;
-						}
-						else
-						{
-							if (decayed_val > highest_value)
-								highest_value = decayed_val;
-						}
-					}
-			if (!computeNegativeInfluence && m_terrainInfluenceMap[r][c] < 0.0f)
-				temp_layer[r * m_width + c] = m_terrainInfluenceMap[r][c];
-			else
-				temp_layer[r * m_width + c] = Lerp(m_terrainInfluenceMap[r][c], highest_value, growing);
+				{
+					// Skip Center
+					if (rn == r&&cn == c)
+						continue;
+
+					// Skip negatives if flag is active
+					float n_value = m_terrainInfluenceMap[rn][cn];
+					if (!computeNegativeInfluence && n_value < 0.0f)
+						continue;
+
+					//Skip unreachable tiles
+					if (!IsClearPath(r, c, rn, cn))
+						continue;
+
+					// Compute decayed value
+					vec3 neig = GetCoordinates(rn, cn);
+					D3DXVECTOR3 delta = neig - orig;
+					float decayed_val = n_value * expf(-1.0f*D3DXVec3Length(&delta)*decay);
+
+					// Store Maximum value
+					if (fabsf(decayed_val) > fabsf(highest_value))
+							highest_value = decayed_val;
+				}
+
+			// Store in temporal layer
+			temp_layer[r * m_width + c] = Lerp(m_terrainInfluenceMap[r][c], highest_value, growing);
 		}
 
+	// Copy Temporal layer
 	for (int r = 0; r < m_width; r++)
 		for (int c = 0; c < m_width; c++)
-			InitialOccupancyMap(r,c,temp_layer[r * m_width + c]);
+			if (computeNegativeInfluence || m_terrainInfluenceMap[r][c] >= 0.0f)
+				InitialOccupancyMap(r,c,temp_layer[r * m_width + c]);
 }
 
 void Terrain::NormalizeOccupancyMap(bool computeNegativeInfluence)

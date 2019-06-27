@@ -36,16 +36,13 @@ bool Movement::ComputePath( int r, int c, bool newRequest )
 			m_waypointList = m_pathfinder.m_waypoints;
 			return true;
 		}
-		m_waypointList.clear();
-		return false;
 	}
-	else
+
+	m_waypointList.clear();
+	if (m_pathfinder.iterate())
 	{
-		if (m_pathfinder.iterate())
-		{
-			m_waypointList = m_pathfinder.m_waypoints;
-			return true;
-		}
-		return false;
+		m_waypointList = m_pathfinder.m_waypoints;
+		return true;
 	}
+	return false;
 }
