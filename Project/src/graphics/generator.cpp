@@ -48,7 +48,7 @@ void generator::set_uniforms(Shader_Program * shader_p, e_shader shader_type)
 		mat4 mtx{ 1.0f };
 		mtx = glm::translate(mtx, { 0.0f, m_water_height, 0.0f });
 		mtx = glm::rotate(mtx, -glm::pi<float>() / 2, { 1.0f, 0.0f, 0.0f });
-		mtx = glm::scale(mtx, vec3(m_map_scale));
+		mtx = glm::scale(mtx, vec3(m_map_scale)*vec3(5, 5, 0));
 		shader_p->set_uniform("Model", mtx);
 		break;
 	default:
