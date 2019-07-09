@@ -13,10 +13,10 @@ struct noise_texture
 #ifdef _DEBUG
 	size_t post_resolution{ 32u };
 #else
-	size_t post_resolution{ 1024u };
+	size_t post_resolution{ 128u };
 #endif // _DEBUG
 	int iterations{8};
-	float noise_scale{ 10.0f };
+	float noise_scale{ 5.0f };
 	float persistance{0.50f};
 	float lacunarity{2.0f};
 	float falloff{ 2.0f };

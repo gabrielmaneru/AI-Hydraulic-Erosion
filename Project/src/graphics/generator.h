@@ -17,7 +17,7 @@ struct generator
 	raw_mesh m_layered_mesh;
 	raw_mesh m_rasterized_mesh;
 	raw_texture_rgb m_rasterized_texture;
-	float m_map_scale{ 2000.0f };
+	float m_map_scale{ 1000.0f };
 	float m_blend_factor{ 0.75f };
 	float m_terrain_slope{ 0.75f };
 	float m_water_height{ 50.0f };
@@ -31,8 +31,6 @@ struct generator
 
 	// Eroder
 	eroder m_eroder;
-	bool m_eroding{ false };
-	int m_iterations{ 10 };
 
 	struct level
 	{

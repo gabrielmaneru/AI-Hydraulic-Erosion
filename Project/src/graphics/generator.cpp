@@ -104,19 +104,90 @@ void generator::draw_gui()
 		break;
 	case s_rasterization:
 		{
-			ImGui::SliderInt("Iterations", &m_iterations, 1, glm::max(m_iterations * 2, 10));
-			ImGui::Checkbox("Eroding", &m_eroding);
-			if(m_eroding)
-				m_eroder.erode(m_rasterized_mesh, m_iterations);
-			if (ImGui::Button("Reset"))
+			static char* items[] = { "Step-by-step", "Iterative", "One-step" };
+			static char* item_current{ "Step-by-step" };
+			static int mode{ 0 };
+			if (ImGui::BeginCombo("Modes", item_current, 0))
+			{
+				for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+				{
+					bool is_selected = (item_current == items[n]);
+					if (ImGui::Selectable(items[n], is_selected))
+						item_current = items[n], mode = n,m_eroder.reset();
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			switch (mode)
+			{
+			case 0: //Step-by-step
+				if (!m_eroder.m_eroding)
+				{
+					if(ImGui::Button("Start",ImVec2(40,20)))
+						m_eroder.m_eroding = true,m_eroder.remaining = m_eroder.sbs_count;
+					ImGui::SliderInt("Particles", &m_eroder.sbs_count, 1, 1024);
+				}
+				else
+				{
+					ImGui::NewLine();
+					ImGui::SameLine(0.0, 40.0f);
+					if (ImGui::Button("Step"))
+						if(!m_eroder.erode(m_rasterized_mesh, 1))
+							m_eroder.reset();
+					ImGui::SameLine();
+					if (ImGui::Button("Stop"))
+						m_eroder.reset();
+				}
+				break;
+			case 1: //Iterative
+				if (m_eroder.m_eroding)
+				{
+					if (ImGui::Checkbox("Iterate", &m_eroder.m_eroding))
+						m_eroder.reset();
+					else
+					{
+						m_eroder.remaining = m_eroder.it_count;
+						m_eroder.erode(m_rasterized_mesh, m_eroder.it_per_frame);
+					}
+				}
+				else
+				{
+					ImGui::Checkbox("Iterate", &m_eroder.m_eroding);
+					ImGui::SliderInt("Particles", &m_eroder.it_count, 1, 10000);
+					ImGui::SliderInt("Speed", &m_eroder.it_per_frame, 1, 100);
+				}
+				break;
+			case 2: //One-step
+				if (ImGui::Button("Start", ImVec2(40, 20)))
+				{
+					m_eroder.m_eroding = true;
+					m_eroder.remaining = m_eroder.os_count;
+					while (m_eroder.erode(m_rasterized_mesh, m_eroder.os_count));
+					m_eroder.reset();
+				}
+				ImGui::InputInt("Particles", &m_eroder.os_count);
+				break;
+			}
+
+			if (ImGui::Button("Reset Mesh"))
 				rasterize_mesh();
-			ImGui::InputFloat("Inertia", &m_eroder.inertia);
-			ImGui::InputFloat("Sediment Factor", &m_eroder.sediment_factor);
-			ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
-			ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
-			ImGui::InputFloat("Evaporate Factor", &m_eroder.erode_factor);
-			ImGui::InputFloat("Gravity", &m_eroder.gravity);
-			ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
+			ImGui::SameLine();
+			if (ImGui::Button("Blur Mesh"))
+				m_eroder.blur(m_rasterized_mesh);
+			ImGui::SameLine();
+			ImGui::SliderFloat("BlurForce", &m_eroder.blur_force, 0.0f, 1.0f);
+			if (ImGui::TreeNode("Properties"))
+			{
+				ImGui::InputFloat("Inertia", &m_eroder.inertia);
+				ImGui::InputFloat("Sediment Factor", &m_eroder.sediment_factor);
+				ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
+				ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
+				ImGui::InputFloat("Evaporate Factor", &m_eroder.evaporate_rate);
+				ImGui::InputFloat("Gravity", &m_eroder.gravity);
+				ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
+				ImGui::TreePop();
+			}
 		}
 		break;
 	default:
