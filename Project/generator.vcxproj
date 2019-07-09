@@ -154,7 +154,6 @@
     <ClCompile Include="src\graphics\mesh.cpp" />
     <ClCompile Include="src\graphics\noise_texture.cpp" />
     <ClCompile Include="src\graphics\ortho_camera.cpp" />
-    <ClCompile Include="src\graphics\quad.cpp" />
     <ClCompile Include="src\graphics\raw_mesh.cpp" />
     <ClCompile Include="src\graphics\raw_texture.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
@@ -431,7 +430,6 @@
     <ClInclude Include="src\graphics\mesh.h" />
     <ClInclude Include="src\graphics\noise_texture.h" />
     <ClInclude Include="src\graphics\ortho_camera.h" />
-    <ClInclude Include="src\graphics\quad.h" />
     <ClInclude Include="src\graphics\raw_mesh.h" />
     <ClInclude Include="src\graphics\raw_texture.h" />
     <ClInclude Include="src\graphics\renderer.h" />

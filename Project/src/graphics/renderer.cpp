@@ -1,6 +1,5 @@
 #include "renderer.h"
 #include "gl_error.h"
-#include "quad.h"
 #include <platform/window_manager.h>
 #include <platform/window.h>
 #include <scene/scene.h>
@@ -10,6 +9,36 @@
 #include <algorithm>
 
 c_renderer* renderer = new c_renderer;
+
+size_t c_renderer::debug_draw_cube(vec3 pos, vec3 scale, vec4 f_color, vec4 l_color)
+{
+	dbg_shapes.emplace_back(dbg_shape{ cube, pos, scale, f_color, l_color });
+	return dbg_shapes.size()-1;
+}
+size_t c_renderer::debug_draw_octohedron(vec3 pos, vec3 scale, vec4 f_color, vec4 l_color)
+{
+	dbg_shapes.emplace_back(dbg_shape{ octohedron, pos, scale, f_color, l_color });
+	return dbg_shapes.size() - 1;
+}
+size_t c_renderer::debug_draw_quad(vec3 pos, vec3 scale, vec4 f_color, vec4 l_color)
+{
+	dbg_shapes.emplace_back(dbg_shape{ quad, pos, scale, f_color, l_color });
+	return dbg_shapes.size() - 1;
+}
+size_t c_renderer::debug_draw_line(vec3 p0, vec3 p1, vec4 l_color)
+{
+	dbg_shapes.emplace_back(dbg_shape{ segment, lerp(p0,p1,.5f), p1-p0, l_color, l_color });
+	return dbg_shapes.size() - 1;
+}
+size_t c_renderer::debug_draw_sphere(vec3 pos, float rad, vec4 f_color, vec4 l_color)
+{
+	dbg_shapes.emplace_back(dbg_shape{ sphere, pos, vec3{0.5f*rad}, f_color, l_color });
+	return dbg_shapes.size() - 1;
+}
+void c_renderer::debug_draw_remove(size_t idx)
+{
+	dbg_shapes.erase(dbg_shapes.begin() + idx);
+}
 
 bool c_renderer::init()
 {
@@ -34,6 +63,16 @@ bool c_renderer::init()
 	catch (const std::string & log) { std::cout << log; return false; }
 
 	//Load Resources
+	try
+	{
+		m_meshes.push_back(new Mesh("resources/meshes/cube.obj"));
+		m_meshes.push_back(new Mesh("resources/meshes/octohedron.obj"));
+		m_meshes.push_back(new Mesh("resources/meshes/quad.obj"));
+		m_meshes.push_back(new Mesh("resources/meshes/segment.obj"));
+		m_meshes.push_back(new Mesh("resources/meshes/sphere.obj"));
+	}
+	catch (const std::string & log) { std::cout << log; return false; }
+
 	scene_cam.m_eye = { .0f, 500.0f, 800.0f };
 	scene_cam.m_yaw = -90.0f;
 	scene_cam.m_pitch = -40.0f;
@@ -44,8 +83,6 @@ bool c_renderer::init()
 	ortho_cam.update();
 
 	m_generator.init();
-
-	quad.load();
 	return true;
 }
 
@@ -91,9 +128,9 @@ void c_renderer::update()
 			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_noise.m_texture.m_id));
 			
 			// Draw Quad
-			GL_CALL(glBindVertexArray(quad.vao));
+			m_meshes[quad]->bind();
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+			GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[quad]->idx_count(), GL_UNSIGNED_SHORT, 0));
 		}
 		break;
 
@@ -116,9 +153,10 @@ void c_renderer::update()
 			water_shader->set_uniform("useColor", true);
 			water_shader->set_uniform("VP", vp);
 			m_generator.set_uniforms(water_shader, generator::e_shader::e_water);
-			GL_CALL(glBindVertexArray(quad.vao));
+
+			m_meshes[quad]->bind();
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+			GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[quad]->idx_count(), GL_UNSIGNED_SHORT, 0));
 
 			// Draw Terrain Mesh
 			layer_shader->use();
@@ -196,15 +234,35 @@ void c_renderer::update()
 			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_reflection.m_color_texture))
 			GL_CALL(glActiveTexture(GL_TEXTURE1));
 			GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_refraction.m_color_texture));
-			GL_CALL(glBindVertexArray(quad.vao));
+			m_meshes[quad]->bind();
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawArrays(GL_TRIANGLES, 0, quad.cnt));
+			GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[quad]->idx_count(), GL_UNSIGNED_SHORT, 0));
 			GL_CALL(glDisable(GL_DEPTH_TEST));
 		}
 	}
 		break;
 	default:
 		break;
+	}
+
+	//Debug Draw
+	vp = scene_cam.m_proj * scene_cam.m_view;
+	basic_shader->use();
+	basic_shader->set_uniform("VP", vp);
+	for (auto& s : dbg_shapes)
+	{
+		m = glm::scale(glm::translate(mat4(1.0f), s.pos), s.scale);
+		basic_shader->set_uniform("Model", m);
+
+		GL_CALL(glEnable(GL_DEPTH_TEST));
+		m_meshes[s.mesh]->bind();
+		basic_shader->set_uniform("base_color", s.f_color);
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+		GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[s.mesh]->idx_count(), GL_UNSIGNED_SHORT, 0));
+		basic_shader->set_uniform("base_color", s.l_color);
+		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+		GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[s.mesh]->idx_count(), GL_UNSIGNED_SHORT, 0));
+		GL_CALL(glDisable(GL_DEPTH_TEST));
 	}
 }
 
