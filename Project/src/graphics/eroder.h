@@ -23,7 +23,7 @@ public:
 	void reset();
 
 	// Properties
-	float inertia = 0.0f;
+	float inertia = 0.8f;
 	float sediment_factor = 10.0f;
 	float minimum_capacity = 0.1f;
 	float erode_factor = 0.3f;
@@ -33,10 +33,10 @@ public:
 	int max_lifetime = 100;
 
 	// Mode values
-	float blur_force{ 0.1f };
-	int sbs_count{ 10 };
-	int it_count{ 1024 };
-	int it_per_frame{ 10 };
+	float blur_force{ 0.2f };
+	int sbs_count{ 1024 };
+	int it_count{ 100000 };
+	int it_per_frame{ 1000 };
 	int os_count{ 100000 };
 	bool m_eroding;
 	int remaining;

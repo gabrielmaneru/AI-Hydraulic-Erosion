@@ -24,7 +24,7 @@ struct generator
 	// Water
 	float m_reflect_factor{ 0.55f };
 	float m_wcolor_factor{ 0.45f };
-	vec3 m_wcolor{ 0.12f, 0.45f, 0.50f };
+	vec3 m_wcolor{ 0.12f, 0.45f, 0.80f };
 	framebuffer m_reflection;
 	framebuffer m_refraction;
 
