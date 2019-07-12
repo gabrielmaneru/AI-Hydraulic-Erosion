@@ -23,7 +23,7 @@ public:
 	void reset();
 
 	// Properties
-	float inertia = 0.2f;
+	float inertia = 0.0f;
 	float sediment_factor = 10.0f;
 	float minimum_capacity = 0.1f;
 	float erode_factor = 0.3f;

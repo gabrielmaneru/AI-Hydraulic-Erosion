@@ -48,7 +48,7 @@ void generator::set_uniforms(Shader_Program * shader_p, e_shader shader_type)
 		mat4 mtx{ 1.0f };
 		mtx = glm::translate(mtx, { 0.0f, m_water_height, 0.0f });
 		mtx = glm::rotate(mtx, -glm::pi<float>() / 2, { 1.0f, 0.0f, 0.0f });
-		mtx = glm::scale(mtx, vec3(m_map_scale)*vec3(5, 5, 0));
+		mtx = glm::scale(mtx, vec3(5, 5, 0));
 		shader_p->set_uniform("Model", mtx);
 		break;
 	default:
@@ -82,7 +82,6 @@ void generator::draw_gui()
 				m_noise.generate();
 
 			ImGui::InputUInt("Resolution", &m_noise.post_resolution);
-			ImGui::InputFloat("Scale", &m_map_scale);
 		}
 		break;
 	case s_apply_layers:
@@ -96,7 +95,7 @@ void generator::draw_gui()
 				{
 					ImGui::ColorEdit3("Color", &levels[i].color[0]);
 					ImGui::SliderFloat("Influence", &levels[i].txt_height, 0.0f, 1.0f);
-					ImGui::SliderFloat("Height", &levels[i].real_height, 0.0f, 500.0f);
+					ImGui::SliderFloat("Height", &levels[i].real_height, 0.00f, 0.1);
 					ImGui::TreePop();
 				}
 			}
@@ -154,8 +153,8 @@ void generator::draw_gui()
 				else
 				{
 					ImGui::Checkbox("Iterate", &m_eroder.m_eroding);
-					ImGui::SliderInt("Particles", &m_eroder.it_count, 1, 10000);
-					ImGui::SliderInt("Speed", &m_eroder.it_per_frame, 1, 100);
+					ImGui::SliderInt("Particles", &m_eroder.it_count, 1, 100000);
+					ImGui::SliderInt("Speed", &m_eroder.it_per_frame, 1, 1000);
 				}
 				break;
 			case 2: //One-step
@@ -241,9 +240,7 @@ void generator::rasterize_mesh()
 			uv.y = map(vertex.z, 0.5f, -0.5f, 0.0f, 1.0f);
 
 			// Compute real height
-			vertex.x *= m_map_scale;
 			vertex.y = acc + levels[current].real_height * level_ratio;
-			vertex.z *= m_map_scale;
 
 			vec3 level_color = levels[current].color;
 

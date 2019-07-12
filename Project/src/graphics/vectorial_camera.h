@@ -7,8 +7,8 @@ struct vectorial_camera
 	void update_cam_vectors();
 	void update_cam_vectors(vec3 front);
 
-	const float min_near = 0.1f;
-	const float max_far = 100000.0f;
+	const float min_near = 0.0001f;
+	const float max_far = 1000.0f;
 
 	float m_fovY{ glm::pi<float>() / 4 };
 	float m_near{ min_near };

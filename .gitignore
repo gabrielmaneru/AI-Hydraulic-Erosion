@@ -21,8 +21,6 @@
 
 *.tlog
 
-*.obj
-
 *.log
 
 *.ini

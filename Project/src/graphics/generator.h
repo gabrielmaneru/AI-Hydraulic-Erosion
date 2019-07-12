@@ -17,10 +17,9 @@ struct generator
 	raw_mesh m_layered_mesh;
 	raw_mesh m_rasterized_mesh;
 	raw_texture_rgb m_rasterized_texture;
-	float m_map_scale{ 1000.0f };
 	float m_blend_factor{ 0.75f };
 	float m_terrain_slope{ 0.75f };
-	float m_water_height{ 50.0f };
+	float m_water_height{ 0.05f };
 
 	// Water
 	float m_reflect_factor{ 0.55f };
@@ -40,10 +39,10 @@ struct generator
 	};
 	std::vector<level> levels
 	{
-		{ vec3{ 0.941f, 0.941f, 0.471f }, 0.4f, 75.f },
-		{ vec3{ 0.118f, 0.471f, 0.235f }, 0.7f, 100.f },
-		{ vec3{ 0.275f, 0.234f, 0.078f }, 0.9f, 100.f },
-		{ vec3{ 0.196f, 0.196f, 0.196f }, 1.0f, 50.f }
+		{ vec3{ 0.941f, 0.941f, 0.471f }, 0.4f, 0.075f },
+		{ vec3{ 0.118f, 0.471f, 0.235f }, 0.7f, 0.1f },
+		{ vec3{ 0.275f, 0.234f, 0.078f }, 0.9f, 0.1f },
+		{ vec3{ 0.196f, 0.196f, 0.196f }, 1.0f, 0.05f }
 	};
 
 	void init();
