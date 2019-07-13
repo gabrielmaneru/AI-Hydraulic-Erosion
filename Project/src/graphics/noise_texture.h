@@ -16,8 +16,8 @@ struct noise_texture
 	size_t post_resolution{ 512u };
 #endif // _DEBUG
 	int iterations{8};
-	float noise_scale{ 5.0f };
+	float noise_scale{ 1.5f };
 	float persistance{0.50f};
 	float lacunarity{2.0f};
-	float falloff{ 2.0f };
+	vec2 falloff{ 0.5f,0.25f };
 };

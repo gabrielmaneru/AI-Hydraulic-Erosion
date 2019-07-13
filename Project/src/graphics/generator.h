@@ -12,6 +12,7 @@ struct generator
 {
 	// Noiser
 	noise_texture m_noise;
+	bool m_shadowy = true;
 
 	// Layer
 	raw_mesh m_layered_mesh;
@@ -39,9 +40,9 @@ struct generator
 	};
 	std::vector<level> levels
 	{
-		{ vec3{ 0.941f, 0.941f, 0.471f }, 0.4f, 0.075f },
-		{ vec3{ 0.118f, 0.471f, 0.235f }, 0.7f, 0.1f },
-		{ vec3{ 0.275f, 0.234f, 0.078f }, 0.9f, 0.1f },
+		{ vec3{ 0.941f, 0.941f, 0.471f }, 0.25f, 0.05f },
+		{ vec3{ 0.118f, 0.471f, 0.235f }, 0.8f, 0.1f },
+		{ vec3{ 0.275f, 0.234f, 0.078f }, 0.9f, 0.05f },
 		{ vec3{ 0.196f, 0.196f, 0.196f }, 1.0f, 0.05f }
 	};
 

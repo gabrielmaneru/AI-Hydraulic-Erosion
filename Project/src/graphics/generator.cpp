@@ -72,8 +72,11 @@ void generator::draw_gui()
 			bool changed = false;
 			if (ImGui::SliderFloat("Noise Scale", &m_noise.noise_scale, 0.0f, 10.0f))changed = true;
 			if (ImGui::InputInt("Iterations", &m_noise.iterations))changed = true;
+			if (ImGui::SliderFloat("Lacunarity", &m_noise.lacunarity, 0.0f, 2.0f))changed = true;
+			if (ImGui::SliderFloat("Persistance", &m_noise.persistance, 0.0f, 2.0f))changed = true;
 			if (ImGui::SliderFloat("Complexity", &m_noise.lacunarity, 0.5f, 2.0f))m_noise.persistance = 1 / m_noise.lacunarity, changed = true;
-			if (ImGui::SliderFloat("FallOff", &m_noise.falloff, 0.001f, 20.0f))changed = true;
+			if (ImGui::SliderFloat("FallOff Intensity", &m_noise.falloff.x, 0.5f, 5.0f))changed = true;
+			if (ImGui::SliderFloat("FallOff Form", &m_noise.falloff.y, -1.0f, 1.0f))changed = true;
 			if (ImGui::Button("Random"))
 				changed = true, randomize_noise();
 			if (ImGui::InputUInt("Preview Resolution", &m_noise.resolution))
@@ -82,6 +85,7 @@ void generator::draw_gui()
 				m_noise.generate();
 
 			ImGui::InputUInt("Resolution", &m_noise.post_resolution);
+			ImGui::Checkbox("Shadows", &m_shadowy);
 		}
 		break;
 	case s_apply_layers:
@@ -95,7 +99,7 @@ void generator::draw_gui()
 				{
 					ImGui::ColorEdit3("Color", &levels[i].color[0]);
 					ImGui::SliderFloat("Influence", &levels[i].txt_height, 0.0f, 1.0f);
-					ImGui::SliderFloat("Height", &levels[i].real_height, 0.00f, 0.1);
+					ImGui::SliderFloat("Height", &levels[i].real_height, 0.00f, 0.1f);
 					ImGui::TreePop();
 				}
 			}

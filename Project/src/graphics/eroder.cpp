@@ -27,6 +27,7 @@ bool eroder::erode(raw_mesh & mesh, int iterations)
 	}
 	mesh.compute_terrain_normals();
 	mesh.load();
+	
 	return true;
 }
 

@@ -40,11 +40,6 @@ void noise_texture::generate()
 			vtx_index++;
 		}
 	}
-	//m_water.vertices = m_naive_mesh.vertices;
-	//m_water.faces = m_naive_mesh.faces;
-	//for (auto& i : m_water.vertices)
-	//	i.y = 10.f;
 
 	m_naive_mesh.load();
-	//m_water.load();
 }

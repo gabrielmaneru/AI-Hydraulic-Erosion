@@ -51,7 +51,7 @@ bool c_renderer::init()
 	// GL Options
 	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 	GL_CALL(glEnable(GL_CULL_FACE));
-	GL_CALL(glLineWidth(2.0f));
+	GL_CALL(glLineWidth(1.0f));
 
 	//Load Programs
 	try {
@@ -93,7 +93,6 @@ void c_renderer::update()
 	GL_CALL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	GL_CALL(glViewport(0, 0, window_manager->get_width(), window_manager->get_height()));
-	GL_CALL(glLineWidth(2.0f));
 	// Camera Update
 	scene_cam.update(window::mouse_offset[0], window::mouse_offset[1]);
 
@@ -111,11 +110,12 @@ void c_renderer::update()
 			basic_shader->use();
 			basic_shader->set_uniform("Model", m);
 			basic_shader->set_uniform("VP", vp);
+			basic_shader->set_uniform("doShadow", m_generator.m_shadowy);
 			// Draw Scene
 			GL_CALL(glEnable(GL_DEPTH_TEST));
 			GL_CALL(glBindVertexArray(m_generator.m_noise.m_naive_mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-			basic_shader->set_uniform("base_color", vec4{ 1.0f, 0.5f, 0.5f, 1.0f });
+			basic_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
 			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_noise.m_naive_mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
 			basic_shader->set_uniform("base_color", vec4{ 0.3f, 0.6f, 0.3f, 1.0f });
