@@ -23,21 +23,23 @@ public:
 	void reset();
 
 	// Properties
-	float inertia = 0.8f;
-	float sediment_factor = 10.0f;
-	float minimum_capacity = 0.1f;
-	float erode_factor = 0.3f;
-	float deposit_factor = 0.3f;
-	float evaporate_rate = 0.01f;
+	float inertia = 0.1f;
+	float capacity_factor = 8.00f;
+	float minimum_capacity = 0.001f;
+	float erode_factor = 0.1f;
+	float deposit_factor = 0.1f;
+	float evaporate_rate = 0.05f;
 	float gravity = 9.8f;
 	int max_lifetime = 100;
+	int scale;
+	int erosion_radius = 3;
 
 	// Mode values
 	float blur_force{ 0.2f };
 	int sbs_count{ 1024 };
 	int it_count{ 100000 };
 	int it_per_frame{ 1000 };
-	int os_count{ 100000 };
+	int os_count{ 500000 };
 	bool m_eroding;
 	int remaining;
 
@@ -46,9 +48,6 @@ private:
 	void create_particles();
 	bool iterate(raw_mesh& mesh);
 
-	// Properties
-	int scale;
-	int erosion_radius = 3;
 
 	struct brush
 	{

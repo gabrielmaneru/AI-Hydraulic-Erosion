@@ -5,16 +5,15 @@ void eroder::initialize(const raw_mesh & mesh)
 	int count = (int)mesh.vertices.size();
 	scale = round_float(sqrtf((float)count));
 	if (m_erosion_brushes.size() != count)
-	{
 		m_erosion_brushes.resize(count);
-		create_erosion_brushes();
-	}
 	reset();
 }
 
 bool eroder::erode(raw_mesh & mesh, int iterations)
 {
 	// Iterate the erosion
+	if (m_erosion_brushes[0].idx.size() != erosion_radius*erosion_radius)
+		create_erosion_brushes();
 	for (int it = 0; it < iterations; it++)
 	{
 		create_particles();
@@ -33,12 +32,14 @@ bool eroder::erode(raw_mesh & mesh, int iterations)
 
 void eroder::blur(raw_mesh & mesh)
 {
+	if (m_erosion_brushes[0].idx.size() != erosion_radius*erosion_radius)
+		create_erosion_brushes();
 	for (int i = 0; i < m_erosion_brushes.size(); i++)
 	{
-		vec3 val{ 0.0f };
+		float val{ 0.0f };
 		for (int j = 0; j < m_erosion_brushes[i].idx.size(); j++)
-			val += m_erosion_brushes[i].weight[j] * mesh.vertices[m_erosion_brushes[i].idx[j]];
-		mesh.vertices[i] = lerp(mesh.vertices[i],val,blur_force);
+			val += m_erosion_brushes[i].weight[j] * mesh.vertices[m_erosion_brushes[i].idx[j]].y;
+		mesh.vertices[i].y = lerp(mesh.vertices[i].y,val,blur_force);
 	}
 	mesh.compute_terrain_normals();
 	mesh.load();
@@ -182,7 +183,7 @@ bool eroder::iterate(raw_mesh& mesh)
 			float d_height = new_height - prev_height;
 
 			// Compute current capacity
-			float sediment_capacity = glm::max(-d_height*p.speed*p.water*sediment_factor, minimum_capacity);
+			float sediment_capacity = glm::max(-d_height*p.speed*p.water*capacity_factor, minimum_capacity);
 
 			// If more sediment than capacity or flowing upwards
 			if (p.sediment > sediment_capacity || d_height > 0.0f)

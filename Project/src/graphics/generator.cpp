@@ -183,10 +183,11 @@ void generator::draw_gui()
 			if (ImGui::TreeNode("Properties"))
 			{
 				ImGui::InputFloat("Inertia", &m_eroder.inertia);
-				ImGui::InputFloat("Sediment Factor", &m_eroder.sediment_factor);
-				ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
+				ImGui::InputFloat("Capacity Factor", &m_eroder.capacity_factor);
 				ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
+				ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
 				ImGui::InputFloat("Evaporate Factor", &m_eroder.evaporate_rate);
+				ImGui::InputInt("Erosion Radius", &m_eroder.erosion_radius);
 				ImGui::InputFloat("Gravity", &m_eroder.gravity);
 				ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
 				ImGui::TreePop();
