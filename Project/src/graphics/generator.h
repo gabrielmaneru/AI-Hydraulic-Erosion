@@ -16,8 +16,7 @@ struct generator
 
 	// Layer
 	raw_mesh m_layered_mesh;
-	raw_mesh m_rasterized_mesh;
-	raw_texture_rgb m_rasterized_texture;
+	rasterized_data m_rasterized;
 	float m_blend_factor{ 0.75f };
 	float m_terrain_slope{ 0.75f };
 	float m_water_height{ 0.05f };
@@ -53,8 +52,10 @@ struct generator
 	void draw_gui();
 
 	int step{ -1 };
-private:
 	void rasterize_mesh();
+	void rasterize_texture();
+
+private:
 
 	void enter_step();
 	void exit_step();

@@ -1,48 +1,48 @@
 #include "eroder.h"
+#include "renderer.h"
 #include <utils\math_utils.h>
-void eroder::initialize(const raw_mesh & mesh)
+void eroder::initialize(const rasterized_data & data)
 {
-	int count = (int)mesh.vertices.size();
-	scale = round_float(sqrtf((float)count));
-	if (m_erosion_brushes.size() != count)
-		m_erosion_brushes.resize(count);
+	if (m_erosion_brushes.size() != data.scale*data.scale)
+		m_erosion_brushes.resize(data.scale*data.scale);
 	reset();
 }
 
-bool eroder::erode(raw_mesh & mesh, int iterations)
+bool eroder::erode(rasterized_data & data, int iterations)
 {
 	// Iterate the erosion
 	if (m_erosion_brushes[0].idx.size() != erosion_radius*erosion_radius)
-		create_erosion_brushes();
+		create_erosion_brushes(data);
+	bool stay = true;
 	for (int it = 0; it < iterations; it++)
 	{
-		create_particles();
-		if (!iterate(mesh) && remaining == 0)
+		create_particles(data);
+		if (!iterate(data) && remaining == 0)
 		{
-			mesh.compute_terrain_normals();
-			mesh.load();
-			return false;
+			stay = false;
+			break;
 		}
 	}
-	mesh.compute_terrain_normals();
-	mesh.load();
-	
-	return true;
+	data.mesh.compute_terrain_normals();
+	data.mesh.load();
+	renderer->m_generator.rasterize_texture();
+	return stay;
 }
 
-void eroder::blur(raw_mesh & mesh)
+void eroder::blur(rasterized_data & data)
 {
 	if (m_erosion_brushes[0].idx.size() != erosion_radius*erosion_radius)
-		create_erosion_brushes();
+		create_erosion_brushes(data);
 	for (int i = 0; i < m_erosion_brushes.size(); i++)
 	{
 		float val{ 0.0f };
 		for (int j = 0; j < m_erosion_brushes[i].idx.size(); j++)
-			val += m_erosion_brushes[i].weight[j] * mesh.vertices[m_erosion_brushes[i].idx[j]].y;
-		mesh.vertices[i].y = lerp(mesh.vertices[i].y,val,blur_force);
+			val += m_erosion_brushes[i].weight[j] * data.mesh.vertices[m_erosion_brushes[i].idx[j]].y;
+		data.mesh.vertices[i].y = lerp(data.mesh.vertices[i].y,val,blur_force);
 	}
-	mesh.compute_terrain_normals();
-	mesh.load();
+	data.mesh.compute_terrain_normals();
+	data.mesh.load();
+	renderer->m_generator.rasterize_texture();
 }
 
 void eroder::reset()
@@ -52,13 +52,13 @@ void eroder::reset()
 	m_eroding = false;
 }
 
-void eroder::create_erosion_brushes()
+void eroder::create_erosion_brushes(rasterized_data& data)
 {
 	for (int i = 0; i < m_erosion_brushes.size(); i++)
 	{
 		auto& brush = m_erosion_brushes[i];
-		int centreX = i % scale;
-		int centreY = i / scale;
+		int centreX = i % data.scale;
+		int centreY = i / data.scale;
 
 		float weightSum = 0;
 		for (int y = -erosion_radius; y <= erosion_radius; y++)
@@ -71,12 +71,12 @@ void eroder::create_erosion_brushes()
 					int coordX = centreX + x;
 					int coordY = centreY + y;
 
-					if (coordX >= 0 && coordX < scale && coordY >= 0 && coordY < scale)
+					if (coordX >= 0 && coordX < data.scale && coordY >= 0 && coordY < data.scale)
 					{
 						float weight = 1 - sqrtf(sqrDst) / erosion_radius;
 						weightSum += weight;
 						brush.weight.push_back(weight);
-						brush.idx.push_back((y + centreY) * scale + x + centreX);
+						brush.idx.push_back((y + centreY) * data.scale + x + centreX);
 					}
 				}
 			}
@@ -88,7 +88,7 @@ void eroder::create_erosion_brushes()
 	}
 }
 
-void eroder::create_particles()
+void eroder::create_particles(rasterized_data& data)
 {
 	for (auto& p : m_particles)
 	{
@@ -97,8 +97,8 @@ void eroder::create_particles()
 		if(p.active == false)
 		{
 			p.active = true;
-			p.posX = map(rand(), 0, RAND_MAX, 2.0f, (float)(scale - 2));
-			p.posY = map(rand(), 0, RAND_MAX, 2.0f, (float)(scale - 2));
+			p.pos = { map(rand(), 0, RAND_MAX, erosion_radius+1.0f, data.scale - erosion_radius - 1.0f),
+					  map(rand(), 0, RAND_MAX, erosion_radius+1.0f, data.scale - erosion_radius - 1.0f) };
 			p.dir = vec2{ 0.0f };
 			p.speed = 1.0f;
 			p.water = 1.0f;
@@ -109,57 +109,17 @@ void eroder::create_particles()
 	}
 }
 
-bool eroder::iterate(raw_mesh& mesh)
+bool eroder::iterate(rasterized_data& data)
 {
-	auto compute_gradient = [&](const particle&p)->vec2
-	{
-		int coordX = floor_float(p.posX);
-		int coordY = floor_float(p.posY);
-		float x = p.posX - coordX;
-		float y = p.posY - coordY;
-
-		int nodeIndexNW = coordY * scale + coordX;
-		float heightNW = mesh.vertices[nodeIndexNW].y;
-		float heightNE = mesh.vertices[nodeIndexNW + 1].y;
-		float heightSW = mesh.vertices[nodeIndexNW + scale].y;
-		float heightSE = mesh.vertices[nodeIndexNW + scale + 1].y;
-		return{ (heightNE - heightNW) * (1 - y) + (heightSE - heightSW) * y,
-			(heightSW - heightNW) * (1 - x) + (heightSE - heightNE) * x };
-	};
-	auto compute_height = [&](const particle&p)->float
-	{
-		int coordX = floor_float(p.posX);
-		int coordY = floor_float(p.posY);
-		float x = p.posX - coordX;
-		float y = p.posY - coordY;
-
-		int nodeIndexNW = coordY * scale + coordX;
-		float heightNW = mesh.vertices[nodeIndexNW].y;
-		float heightNE = mesh.vertices[nodeIndexNW + 1].y;
-		float heightSW = mesh.vertices[nodeIndexNW + scale].y;
-		float heightSE = mesh.vertices[nodeIndexNW + scale + 1].y;
-		float h = heightNW * (1 - x) * (1 - y) + heightNE * x * (1 - y) + heightSW * (1 - x) * y + heightSE * x * y;
-		return h * scale / 2000.f;
-	};
 	bool still_active = false;
 	for (auto& p : m_particles)
 	{
 		if (p.active)
 		{
-			// Round position
-			int nodeX = round_float(p.posX);
-			int nodeY = round_float(p.posY);
-			int dropletIndex = nodeY * scale + nodeX;
-			float cellOffestX = p.posX - nodeX;
-			float cellOffsetY = p.posY - nodeY;
-
-			// Update direction using gradient
-			vec2 gradient = compute_gradient(p);
+			// Compute gradient
+			vec2 gradient = p.gradient(data);
+			// Update direction
 			p.dir = p.dir*inertia - gradient * (1 - inertia);
-
-			// Store previous height
-			float prev_height = compute_height(p);
-
 			// Stop if not moving
 			if (glm::length2(p.dir) < glm::epsilon<float>())
 			{
@@ -167,23 +127,30 @@ bool eroder::iterate(raw_mesh& mesh)
 				continue;
 			}
 
+			// Store previous height
+			float prev_height = p.height(data);
+			// Store previous position
+			int prev_nodeX = floor_float(p.pos.x);
+			int prev_nodeY = floor_float(p.pos.y);
+			float prev_deviationX = p.pos.x - prev_nodeX;
+			float prev_deviationY = p.pos.y - prev_nodeY;
+
 			// Update position
 			p.dir = glm::normalize(p.dir);
-			p.posX += p.dir.x;
-			p.posY += p.dir.y;
-
-			if (p.posY <= erosion_radius || p.posY >= scale - erosion_radius || p.posX <= erosion_radius || p.posX >= scale - erosion_radius)
+			p.pos.x += p.dir.x;
+			p.pos.y += p.dir.y;
+			// Stop if particle is out of bounds
+			if (p.pos.y <= erosion_radius || p.pos.y >= data.scale - erosion_radius || p.pos.x <= erosion_radius || p.pos.x >= data.scale - erosion_radius)
 			{
 				p.active = false;
 				continue;
 			}
 
 			// Compute new height
-			float new_height = compute_height(p);
+			float new_height = p.height(data);
 			float d_height = new_height - prev_height;
-
 			// Compute current capacity
-			float sediment_capacity = glm::max(-d_height*p.speed*p.water*capacity_factor, minimum_capacity);
+			float sediment_capacity = max(-d_height*p.speed*p.water*capacity_factor, minimum_slope);
 
 			// If more sediment than capacity or flowing upwards
 			if (p.sediment > sediment_capacity || d_height > 0.0f)
@@ -192,43 +159,89 @@ bool eroder::iterate(raw_mesh& mesh)
 				{
 					float to_deposit;
 					if (d_height > 0)
-						to_deposit = glm::min(d_height, p.sediment);
+						to_deposit = min(d_height, p.sediment);
 					else
 						to_deposit = (p.sediment - sediment_capacity) *deposit_factor;
-
-					p.sediment -= to_deposit;
-
-					mesh.vertices[dropletIndex].y += to_deposit * (1 - cellOffestX)*(1 - cellOffsetY);
-					mesh.vertices[dropletIndex + 1].y += to_deposit * cellOffestX*(1 - cellOffsetY);
-					mesh.vertices[dropletIndex + scale].y += to_deposit * (1 - cellOffestX)*cellOffsetY;
-					mesh.vertices[dropletIndex + scale + 1].y += to_deposit * cellOffestX*cellOffsetY;
+					p.deposit(data, to_deposit, prev_nodeY * data.scale + prev_nodeX, prev_deviationX, prev_deviationX);
 				}
 			}
 			else
 			{
-				float to_erode = glm::min((sediment_capacity - p.sediment)*erode_factor, -d_height);
-
-				brush& b = m_erosion_brushes[dropletIndex];
-				for (int index = 0; index < b.idx.size(); index++)
-				{
-					int vtx_index = b.idx[index];
-					float amount = to_erode * b.weight[index];
-
-					float d_sediment = glm::min(mesh.vertices[vtx_index].y, amount);
-					mesh.vertices[dropletIndex].y -= d_sediment;
-					p.sediment += d_sediment;
-				}
+				float to_erode = min((sediment_capacity - p.sediment)*erode_factor, -d_height);
+				p.erode(data, to_erode, m_erosion_brushes[prev_nodeY * data.scale + prev_nodeX]);
 			}
+
 			if (++p.lifetime == max_lifetime)
 			{
 				p.active = false;
 				continue;
 			}
-			p.speed = sqrtf(glm::max(p.speed * p.speed + d_height * gravity, 0.0f));
-			p.water *= (1 - evaporate_rate);
+			p.speed = sqrtf(max(p.speed * p.speed + d_height * gravity, 0.0f));
+			p.water *= (1 - evaporation);
 			still_active = true;
 			
 		}
 	}
 	return still_active;
+}
+
+vec2 particle::gradient(const rasterized_data & data)
+{
+	int prev_nodeX = floor_float(pos.x);
+	int prev_nodeY = floor_float(pos.y);
+	float prev_deviationX = pos.x - prev_nodeX;
+	float prev_deviationY = pos.y - prev_nodeY;
+
+	int nodeIndexNW = prev_nodeY * data.scale + prev_nodeX;
+	float heightNW = data.mesh.vertices[nodeIndexNW].y;
+	float heightNE = data.mesh.vertices[nodeIndexNW + 1].y;
+	float heightSW = data.mesh.vertices[nodeIndexNW + data.scale].y;
+	float heightSE = data.mesh.vertices[nodeIndexNW + data.scale + 1].y;
+
+	return{ (heightNE - heightNW) * (1 - prev_deviationY)
+		+ (heightSE - heightSW) * prev_deviationY,
+		(heightSW - heightNW) * (1 - prev_deviationX)
+		+ (heightSE - heightNE) * prev_deviationX };
+}
+
+float particle::height(const rasterized_data & data)
+{
+	int prev_nodeX = floor_float(pos.x);
+	int prev_nodeY = floor_float(pos.y);
+	float prev_deviationX = pos.x - prev_nodeX;
+	float prev_deviationY = pos.y - prev_nodeY;
+
+	int nodeIndexNW = prev_nodeY * data.scale + prev_nodeX;
+	float heightNW = data.mesh.vertices[nodeIndexNW].y;
+	float heightNE = data.mesh.vertices[nodeIndexNW + 1].y;
+	float heightSW = data.mesh.vertices[nodeIndexNW + data.scale].y;
+	float heightSE = data.mesh.vertices[nodeIndexNW + data.scale + 1].y;
+
+	return heightNW * (1 - prev_deviationX) * (1 - prev_deviationY)
+		+ heightNE * prev_deviationX * (1 - prev_deviationY)
+		+ heightSW * (1 - prev_deviationX) * prev_deviationY
+		+ heightSE * prev_deviationX * prev_deviationY;
+}
+
+void particle::deposit(rasterized_data & data, float to_deposit, int dropletIndex, float prev_deviationX, float prev_deviationY)
+{
+	sediment -= to_deposit;
+
+	data.mesh.vertices[dropletIndex].y += to_deposit * (1 - prev_deviationX)*(1 - prev_deviationY);
+	data.mesh.vertices[dropletIndex + 1].y += to_deposit * prev_deviationX*(1 - prev_deviationY);
+	data.mesh.vertices[dropletIndex + data.scale].y += to_deposit * (1 - prev_deviationX)*prev_deviationY;
+	data.mesh.vertices[dropletIndex + data.scale + 1].y += to_deposit * prev_deviationX*prev_deviationY;
+}
+
+void particle::erode(rasterized_data & data, float to_erode, const brush & b)
+{
+	for (int index = 0; index < b.idx.size(); index++)
+	{
+		int vtx_index = b.idx[index];
+		float amount = to_erode * b.weight[index];
+
+		float d_sediment = min(data.mesh.vertices[vtx_index].y, amount);
+		data.mesh.vertices[vtx_index].y -= d_sediment;
+		sediment += d_sediment;
+	}
 }

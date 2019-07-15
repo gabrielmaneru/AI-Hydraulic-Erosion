@@ -98,8 +98,10 @@ void generator::draw_gui()
 				if (ImGui::TreeNode(("Layer_" + std::to_string(i)).c_str()))
 				{
 					ImGui::ColorEdit3("Color", &levels[i].color[0]);
-					ImGui::SliderFloat("Influence", &levels[i].txt_height, 0.0f, 1.0f);
-					ImGui::SliderFloat("Height", &levels[i].real_height, 0.00f, 0.1f);
+					if (i < levels.size() - 1)
+						if (ImGui::SliderFloat("Influence", &levels[i].txt_height, 0.0f, 1.0f) && i > 0)
+							levels[i].txt_height = glm::clamp(levels[i].txt_height, levels[i - 1].txt_height, levels[i + 1].txt_height);
+					ImGui::SliderFloat("Height", &levels[i].real_height, 0.00f, 0.2f);
 					ImGui::TreePop();
 				}
 			}
@@ -108,8 +110,8 @@ void generator::draw_gui()
 	case s_rasterization:
 		{
 			static char* items[] = { "Step-by-step", "Iterative", "One-step" };
-			static char* item_current{ "Step-by-step" };
-			static int mode{ 0 };
+			static int mode{ 1 };
+			static char* item_current = items[mode];
 			if (ImGui::BeginCombo("Modes", item_current, 0))
 			{
 				for (int n = 0; n < IM_ARRAYSIZE(items); n++)
@@ -136,7 +138,7 @@ void generator::draw_gui()
 					ImGui::NewLine();
 					ImGui::SameLine(0.0, 40.0f);
 					if (ImGui::Button("Step"))
-						if(!m_eroder.erode(m_rasterized_mesh, 1))
+						if(!m_eroder.erode(m_rasterized, 1))
 							m_eroder.reset();
 					ImGui::SameLine();
 					if (ImGui::Button("Stop"))
@@ -151,7 +153,7 @@ void generator::draw_gui()
 					else
 					{
 						m_eroder.remaining = m_eroder.it_count;
-						m_eroder.erode(m_rasterized_mesh, m_eroder.it_per_frame);
+						m_eroder.erode(m_rasterized, m_eroder.it_per_frame);
 					}
 				}
 				else
@@ -166,7 +168,7 @@ void generator::draw_gui()
 				{
 					m_eroder.m_eroding = true;
 					m_eroder.remaining = m_eroder.os_count;
-					while (m_eroder.erode(m_rasterized_mesh, m_eroder.os_count));
+					while (m_eroder.erode(m_rasterized, m_eroder.os_count));
 					m_eroder.reset();
 				}
 				ImGui::InputInt("Particles", &m_eroder.os_count);
@@ -174,10 +176,13 @@ void generator::draw_gui()
 			}
 
 			if (ImGui::Button("Reset Mesh"))
+			{
 				rasterize_mesh();
+				rasterize_texture();
+			}
 			ImGui::SameLine();
 			if (ImGui::Button("Blur Mesh"))
-				m_eroder.blur(m_rasterized_mesh);
+				m_eroder.blur(m_rasterized);
 			ImGui::SameLine();
 			ImGui::SliderFloat("BlurForce", &m_eroder.blur_force, 0.0f, 1.0f);
 			if (ImGui::TreeNode("Properties"))
@@ -186,7 +191,7 @@ void generator::draw_gui()
 				ImGui::InputFloat("Capacity Factor", &m_eroder.capacity_factor);
 				ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
 				ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
-				ImGui::InputFloat("Evaporate Factor", &m_eroder.evaporate_rate);
+				ImGui::InputFloat("Evaporate Factor", &m_eroder.evaporation);
 				ImGui::InputInt("Erosion Radius", &m_eroder.erosion_radius);
 				ImGui::InputFloat("Gravity", &m_eroder.gravity);
 				ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
@@ -201,17 +206,15 @@ void generator::draw_gui()
 
 void generator::rasterize_mesh()
 {
-	m_rasterized_mesh.faces = m_layered_mesh.faces;
-	m_rasterized_mesh.vertices = m_layered_mesh.vertices;
-	m_rasterized_mesh.uv_coord.resize(m_layered_mesh.vertices.size());
-	m_rasterized_texture.setup(m_noise.resolution, m_noise.resolution);
-	m_rasterized_texture.clear({});
+	m_rasterized.mesh.faces = m_layered_mesh.faces;
+	m_rasterized.mesh.vertices = m_layered_mesh.vertices;
+	m_rasterized.mesh.uv_coord.resize(m_layered_mesh.vertices.size());
 
 	for (size_t y = 0; y < m_noise.resolution; y++)
 		for (size_t x = 0; x < m_noise.resolution; x++)
 		{
-			vec3& vertex = m_rasterized_mesh.vertices[y*m_noise.resolution + x];
-			vec2& uv = m_rasterized_mesh.uv_coord[y*m_noise.resolution + x];
+			vec3& vertex = m_rasterized.mesh.vertices[y*m_noise.resolution + x];
+			vec2& uv = m_rasterized.mesh.uv_coord[y*m_noise.resolution + x];
 			float value = vertex.y;
 
 			// Get level
@@ -246,15 +249,34 @@ void generator::rasterize_mesh()
 
 			// Compute real height
 			vertex.y = acc + levels[current].real_height * level_ratio;
+		}
+	m_rasterized.mesh.compute_terrain_normals();
+	m_rasterized.mesh.load();
+	m_rasterized.scale = static_cast<int>(m_noise.resolution);
+}
+
+void generator::rasterize_texture()
+{
+	m_rasterized.texture.setup(m_noise.resolution, m_noise.resolution);
+	m_rasterized.texture.clear({});
+
+	for (size_t y = 0; y < m_noise.resolution; y++)
+		for (size_t x = 0; x < m_noise.resolution; x++)
+		{
+			float value = m_rasterized.mesh.vertices[y*m_noise.resolution + x].y;
+
+			// Get level
+			int current = 0;
+			float prev = 0.0f;
+			for (; current < levels.size(); current++)
+				if (value <= prev + levels[current].real_height)
+					break;
+				else
+					prev += levels[current].real_height;
 
 			vec3 level_color = levels[current].color;
 
-			float prev = 0.0, post = 1.0;
-			if (current > 0)
-				prev = levels[current - 1].txt_height;
-
-			if (current < levels.size() - 1)
-				post = levels[current].txt_height;
+			float post = prev + levels[current].real_height;
 
 			float factor = (value - prev) / (post - prev);
 			if (factor < m_blend_factor && current > 0)
@@ -266,11 +288,9 @@ void generator::rasterize_mesh()
 				level_color += (levels[current + 1].color - level_color) * ((m_blend_factor - (1 - factor)) / (m_blend_factor * 2));
 			}
 
-			m_rasterized_texture.set(x, y, level_color);
+			m_rasterized.texture.set(x, y, level_color);
 		}
-	m_rasterized_mesh.compute_terrain_normals();
-	m_rasterized_mesh.load();
-	m_rasterized_texture.load();
+	m_rasterized.texture.load();
 }
 
 void generator::enter_step()
@@ -285,9 +305,10 @@ void generator::enter_step()
 		break;
 	case s_rasterization:
 		rasterize_mesh();
+		rasterize_texture();
 		m_reflection.setup(1920, 1080);
 		m_refraction.setup(1920, 1080);
-		m_eroder.initialize(m_rasterized_mesh);
+		m_eroder.initialize(m_rasterized);
 		break;
 	default:
 		break;

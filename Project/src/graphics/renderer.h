@@ -44,5 +44,6 @@ public:
 	void shutdown();
 	friend class c_editor;
 	friend struct generator;
+	friend class eroder;
 };
 extern c_renderer* renderer;

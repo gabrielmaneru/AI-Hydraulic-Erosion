@@ -182,15 +182,15 @@ void c_renderer::update()
 		gradient_shader->set_uniform("doClip", true);
 		gradient_shader->set_uniform("clip_normal", vec4(0.0f, 1.0f, 0.0f, -m_generator.m_water_height));
 		GL_CALL(glActiveTexture(GL_TEXTURE0));
-		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized_texture.m_id));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized.texture.m_id));
 		
 		GL_CALL(glEnable(GL_DEPTH_TEST));
 		GL_CALL(glEnable(GL_CLIP_DISTANCE0));
 
 		// Draw Scene
-		GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+		GL_CALL(glBindVertexArray(m_generator.m_rasterized.mesh.m_vao));
 		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized.mesh.faces.size(), GL_UNSIGNED_INT, 0));
 
 
 		// Draw Water
@@ -201,9 +201,9 @@ void c_renderer::update()
 			GL_CALL(glViewport(0, 0, m_generator.m_refraction.m_width, m_generator.m_refraction.m_height));
 			// Draw Refraction
 			gradient_shader->set_uniform("clip_normal", vec4(0.0f, -1.0f, 0.0f, m_generator.m_water_height));
-			GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+			GL_CALL(glBindVertexArray(m_generator.m_rasterized.mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized.mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			gradient_shader->set_uniform("VP", vp);
 			// Bind Reflection
 			GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_generator.m_reflection.m_fbo));
@@ -214,9 +214,9 @@ void c_renderer::update()
 			gradient_shader->set_uniform("VP", scene_cam.m_proj * invert_cam.m_view);
 			// Draw Reflection
 			gradient_shader->set_uniform("clip_normal", vec4(0.0f, 1.0f, 0.0f, -m_generator.m_water_height));
-			GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+			GL_CALL(glBindVertexArray(m_generator.m_rasterized.mesh.m_vao));
 			GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+			GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized.mesh.faces.size(), GL_UNSIGNED_INT, 0));
 			GL_CALL(glDisable(GL_CLIP_DISTANCE0));
 
 
@@ -247,9 +247,9 @@ void c_renderer::update()
 		basic_shader->set_uniform("Model", mat4(1.0f));
 		basic_shader->set_uniform("VP", vp);
 		basic_shader->set_uniform("base_color", vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
-		GL_CALL(glBindVertexArray(m_generator.m_rasterized_mesh.m_vao));
+		GL_CALL(glBindVertexArray(m_generator.m_rasterized.mesh.m_vao));
 		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized_mesh.faces.size(), GL_UNSIGNED_INT, 0));
+		GL_CALL(glDrawElements(GL_TRIANGLES, (GLsizei)m_generator.m_rasterized.mesh.faces.size(), GL_UNSIGNED_INT, 0));
 		GL_CALL(glDisable(GL_DEPTH_TEST));
 	}
 		break;
