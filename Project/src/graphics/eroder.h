@@ -30,8 +30,11 @@ struct particle
 	vec2 gradient(const rasterized_data& data);
 	float height(const rasterized_data& data);
 
-	void deposit(rasterized_data& data, float to_deposit, int dropletIndex, float prev_deviationX, float prev_deviationY);
-	void erode(rasterized_data& data, float to_erode, const brush& b);
+	void deposit(rasterized_data& data, float to_deposit, int dropletIndex, float prev_deviationX, float prev_deviationY, unsigned m_display_mode);
+	void erode(rasterized_data& data, float to_erode, const brush& b, unsigned m_display_mode);
+
+	void take(rasterized_data& data, float amount, int idx, unsigned m_display_mode);
+	void release(rasterized_data& data, float amount, int idx, unsigned m_display_mode);
 };
 constexpr size_t max_particles = 1024;
 
@@ -41,7 +44,9 @@ public:
 	void initialize(const rasterized_data& data);
 	bool erode(rasterized_data& data, int iterations);
 	void blur(rasterized_data& data);
+	void update_texture(rasterized_data& data);
 	void reset();
+	void reset_display();
 
 	// Properties
 	float inertia = 0.05f;
@@ -62,6 +67,12 @@ public:
 	int os_count{ 500000 };
 	bool m_eroding;
 	int remaining;
+
+	// Display
+	enum e_display_mode {normal=0, preserve_colors, drag_color, tracer};
+	e_display_mode m_display_mode{ normal };
+	map2d<size_t> m_trace_map;
+	float trace_hardness = 0.5f;
 
 private:
 	void create_erosion_brushes(rasterized_data& data);

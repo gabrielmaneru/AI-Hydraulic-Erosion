@@ -111,14 +111,13 @@ void generator::draw_gui()
 		{
 			static char* items[] = { "Step-by-step", "Iterative", "One-step" };
 			static int mode{ 1 };
-			static char* item_current = items[mode];
-			if (ImGui::BeginCombo("Modes", item_current, 0))
+			if (ImGui::BeginCombo("Modes", items[mode], 0))
 			{
 				for (int n = 0; n < IM_ARRAYSIZE(items); n++)
 				{
-					bool is_selected = (item_current == items[n]);
+					bool is_selected = (items[mode] == items[n]);
 					if (ImGui::Selectable(items[n], is_selected))
-						item_current = items[n], mode = n,m_eroder.reset();
+						mode = n, m_eroder.reset();
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -185,17 +184,43 @@ void generator::draw_gui()
 				m_eroder.blur(m_rasterized);
 			ImGui::SameLine();
 			ImGui::SliderFloat("BlurForce", &m_eroder.blur_force, 0.0f, 1.0f);
-			if (ImGui::TreeNode("Properties"))
+			ImGui::NewLine();
+			ImGui::NewLine();
+			ImGui::InputFloat("Inertia", &m_eroder.inertia);
+			ImGui::InputFloat("Capacity Factor", &m_eroder.capacity_factor);
+			ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
+			ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
+			ImGui::InputFloat("Evaporate Factor", &m_eroder.evaporation);
+			ImGui::InputInt("Erosion Radius", &m_eroder.erosion_radius);
+			ImGui::InputFloat("Gravity", &m_eroder.gravity);
+			ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
+			ImGui::NewLine();
+			ImGui::NewLine();
+			static char* items2[] = { "Normal", "Preserve Colors", "Drag Color", "Tracer" };
+			if (ImGui::BeginCombo("Display Modes", items2[m_eroder.m_display_mode], 0))
 			{
-				ImGui::InputFloat("Inertia", &m_eroder.inertia);
-				ImGui::InputFloat("Capacity Factor", &m_eroder.capacity_factor);
-				ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
-				ImGui::InputFloat("Erode Factor", &m_eroder.erode_factor);
-				ImGui::InputFloat("Evaporate Factor", &m_eroder.evaporation);
-				ImGui::InputInt("Erosion Radius", &m_eroder.erosion_radius);
-				ImGui::InputFloat("Gravity", &m_eroder.gravity);
-				ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
-				ImGui::TreePop();
+				for (int n = 0; n < IM_ARRAYSIZE(items2); n++)
+				{
+					bool is_selected = (items2[m_eroder.m_display_mode] == items2[n]);
+					if (ImGui::Selectable(items2[n], is_selected))
+					{
+						m_eroder.m_display_mode = static_cast<eroder::e_display_mode>(n);
+						m_eroder.reset_display();
+						m_eroder.update_texture(m_rasterized);
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			if (m_eroder.m_display_mode == eroder::tracer)
+			{
+				if (ImGui::Button("Reset Trace"))
+				{
+					m_eroder.reset_display();
+					m_eroder.update_texture(m_rasterized);
+				}
+				ImGui::SliderFloat("Hardness", &m_eroder.trace_hardness, 0.0f, 1.0f);
 			}
 		}
 		break;

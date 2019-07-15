@@ -5,6 +5,7 @@ void eroder::initialize(const rasterized_data & data)
 {
 	if (m_erosion_brushes.size() != data.scale*data.scale)
 		m_erosion_brushes.resize(data.scale*data.scale);
+	m_trace_map.setup(data.scale, data.scale);
 	reset();
 }
 
@@ -25,7 +26,7 @@ bool eroder::erode(rasterized_data & data, int iterations)
 	}
 	data.mesh.compute_terrain_normals();
 	data.mesh.load();
-	renderer->m_generator.rasterize_texture();
+	update_texture(data);
 	return stay;
 }
 
@@ -42,7 +43,35 @@ void eroder::blur(rasterized_data & data)
 	}
 	data.mesh.compute_terrain_normals();
 	data.mesh.load();
-	renderer->m_generator.rasterize_texture();
+	update_texture(data);
+}
+
+void eroder::update_texture(rasterized_data & data)
+{
+	if (m_display_mode == preserve_colors)
+		renderer->m_generator.rasterize_texture();
+	else if (m_display_mode == tracer)
+	{
+		size_t max = 1u;
+		m_trace_map.loop(
+			[&](size_t, size_t, size_t prev) -> size_t {
+			if (prev > max)
+				max = prev;
+			return prev;
+		});
+
+		max *= trace_hardness;
+
+		data.texture.loop(
+			[&](size_t x, size_t y, vec3) -> vec3 {
+			if (max == 0)
+				return vec3{ 1.0 };
+			return vec3{ 1.0f - (m_trace_map.get(x,y) / (float)max) };
+		});
+		data.texture.load();
+	}
+	else
+		data.texture.load();
 }
 
 void eroder::reset()
@@ -50,6 +79,11 @@ void eroder::reset()
 	m_particles.fill({});
 	remaining = 0;
 	m_eroding = false;
+}
+
+void eroder::reset_display()
+{
+	m_trace_map.clear(0u);
 }
 
 void eroder::create_erosion_brushes(rasterized_data& data)
@@ -162,13 +196,13 @@ bool eroder::iterate(rasterized_data& data)
 						to_deposit = min(d_height, p.sediment);
 					else
 						to_deposit = (p.sediment - sediment_capacity) *deposit_factor;
-					p.deposit(data, to_deposit, prev_nodeY * data.scale + prev_nodeX, prev_deviationX, prev_deviationX);
+					p.deposit(data, to_deposit, prev_nodeY * data.scale + prev_nodeX, prev_deviationX, prev_deviationX, m_display_mode);
 				}
 			}
 			else
 			{
 				float to_erode = min((sediment_capacity - p.sediment)*erode_factor, -d_height);
-				p.erode(data, to_erode, m_erosion_brushes[prev_nodeY * data.scale + prev_nodeX]);
+				p.erode(data, to_erode, m_erosion_brushes[prev_nodeY * data.scale + prev_nodeX], m_display_mode);
 			}
 
 			if (++p.lifetime == max_lifetime)
@@ -179,7 +213,13 @@ bool eroder::iterate(rasterized_data& data)
 			p.speed = sqrtf(max(p.speed * p.speed + d_height * gravity, 0.0f));
 			p.water *= (1 - evaporation);
 			still_active = true;
-			
+
+			if (m_display_mode == eroder::tracer)
+			{
+				size_t x = round_float(p.pos.x);
+				size_t y = round_float(p.pos.y);
+				m_trace_map.set(x, y, m_trace_map.get(x, y) + 1);
+			}
 		}
 	}
 	return still_active;
@@ -223,25 +263,55 @@ float particle::height(const rasterized_data & data)
 		+ heightSE * prev_deviationX * prev_deviationY;
 }
 
-void particle::deposit(rasterized_data & data, float to_deposit, int dropletIndex, float prev_deviationX, float prev_deviationY)
+void particle::deposit(rasterized_data & data, float to_deposit, int dropletIndex, float prev_deviationX, float prev_deviationY, unsigned m_display_mode)
 {
+	release(data, to_deposit * (1 - prev_deviationX)*(1 - prev_deviationY), dropletIndex, m_display_mode);
+	release(data, to_deposit * prev_deviationX*(1 - prev_deviationY), dropletIndex + 1, m_display_mode);
+	release(data, to_deposit * (1 - prev_deviationX)*prev_deviationY, dropletIndex + data.scale, m_display_mode);
+	release(data, to_deposit * prev_deviationX*prev_deviationY, dropletIndex + data.scale + 1, m_display_mode);
 	sediment -= to_deposit;
-
-	data.mesh.vertices[dropletIndex].y += to_deposit * (1 - prev_deviationX)*(1 - prev_deviationY);
-	data.mesh.vertices[dropletIndex + 1].y += to_deposit * prev_deviationX*(1 - prev_deviationY);
-	data.mesh.vertices[dropletIndex + data.scale].y += to_deposit * (1 - prev_deviationX)*prev_deviationY;
-	data.mesh.vertices[dropletIndex + data.scale + 1].y += to_deposit * prev_deviationX*prev_deviationY;
 }
 
-void particle::erode(rasterized_data & data, float to_erode, const brush & b)
+void particle::erode(rasterized_data & data, float to_erode, const brush & b, unsigned m_display_mode)
 {
 	for (int index = 0; index < b.idx.size(); index++)
 	{
 		int vtx_index = b.idx[index];
 		float amount = to_erode * b.weight[index];
-
-		float d_sediment = min(data.mesh.vertices[vtx_index].y, amount);
-		data.mesh.vertices[vtx_index].y -= d_sediment;
-		sediment += d_sediment;
+		amount = min(data.mesh.vertices[vtx_index].y, amount);
+		take(data, amount, vtx_index, m_display_mode);
+		sediment += amount;
 	}
+}
+
+void particle::take(rasterized_data & data, float amount, int idx, unsigned m_display_mode)
+{
+	data.mesh.vertices[idx].y -= amount;
+
+
+
+	if (m_display_mode == eroder::normal)
+	{
+		if (sediment == 0.0f)
+			color = data.texture.get(idx);
+		else
+			color = lerp(color, data.texture.get(idx), amount / sediment);
+	}
+	else if (m_display_mode == eroder::drag_color)
+		color = lerp(color, data.texture.get(idx), 0.1f);
+}
+
+void particle::release(rasterized_data & data, float amount, int idx, unsigned m_display_mode)
+{
+	data.mesh.vertices[idx].y += amount;
+
+	if (m_display_mode == eroder::normal)
+	{
+		if (data.mesh.vertices[idx].y == 0.0f)
+			data.texture.set(idx, color);
+		else
+			data.texture.set(idx, lerp(data.texture.get(idx), color, amount / data.mesh.vertices[idx].y));
+	}
+	else if (m_display_mode == eroder::drag_color)
+		data.texture.set(idx, lerp(data.texture.get(idx), color, 0.1f));
 }

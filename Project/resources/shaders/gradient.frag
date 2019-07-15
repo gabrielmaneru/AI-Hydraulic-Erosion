@@ -4,6 +4,7 @@ in vec3 normal;
 
 uniform sampler2D uniform_texture;
 uniform int dim;
+uniform bool doShading = true;
 
 out vec4 out_color;
 void main()
@@ -13,5 +14,6 @@ void main()
 		out_color = vec4(vec3(texel.r), 1.0f);
 	else if(dim == 3)
 		out_color = vec4(texel, 1.0f);
-	out_color *= normal.y;
+	if(doShading)
+		out_color *= normal.y;
 }

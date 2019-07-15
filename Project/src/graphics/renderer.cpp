@@ -10,36 +10,6 @@
 
 c_renderer* renderer = new c_renderer;
 
-size_t c_renderer::debug_draw_cube(vec3 pos, vec3 scale, vec4 f_color, vec4 l_color)
-{
-	dbg_shapes.emplace_back(dbg_shape{ cube, pos, scale, f_color, l_color });
-	return dbg_shapes.size()-1;
-}
-size_t c_renderer::debug_draw_octohedron(vec3 pos, vec3 scale, vec4 f_color, vec4 l_color)
-{
-	dbg_shapes.emplace_back(dbg_shape{ octohedron, pos, scale, f_color, l_color });
-	return dbg_shapes.size() - 1;
-}
-size_t c_renderer::debug_draw_quad(vec3 pos, vec3 scale, vec4 f_color, vec4 l_color)
-{
-	dbg_shapes.emplace_back(dbg_shape{ quad, pos, scale, f_color, l_color });
-	return dbg_shapes.size() - 1;
-}
-size_t c_renderer::debug_draw_line(vec3 p0, vec3 p1, vec4 l_color)
-{
-	dbg_shapes.emplace_back(dbg_shape{ segment, lerp(p0,p1,.5f), p1-p0, l_color, l_color });
-	return dbg_shapes.size() - 1;
-}
-size_t c_renderer::debug_draw_sphere(vec3 pos, float rad, vec4 f_color, vec4 l_color)
-{
-	dbg_shapes.emplace_back(dbg_shape{ sphere, pos, vec3{0.5f*rad}, f_color, l_color });
-	return dbg_shapes.size() - 1;
-}
-void c_renderer::debug_draw_remove(size_t idx)
-{
-	dbg_shapes.erase(dbg_shapes.begin() + idx);
-}
-
 bool c_renderer::init()
 {
 	if (gl3wInit())
@@ -180,6 +150,7 @@ void c_renderer::update()
 		gradient_shader->set_uniform("VP", vp);
 		gradient_shader->set_uniform("dim", 3);
 		gradient_shader->set_uniform("doClip", true);
+		gradient_shader->set_uniform("doShading", m_generator.m_eroder.m_display_mode != eroder::tracer);
 		gradient_shader->set_uniform("clip_normal", vec4(0.0f, 1.0f, 0.0f, -m_generator.m_water_height));
 		GL_CALL(glActiveTexture(GL_TEXTURE0));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_generator.m_rasterized.texture.m_id));
@@ -255,26 +226,6 @@ void c_renderer::update()
 		break;
 	default:
 		break;
-	}
-
-	//Debug Draw
-	vp = scene_cam.m_proj * scene_cam.m_view;
-	basic_shader->use();
-	basic_shader->set_uniform("VP", vp);
-	for (auto& s : dbg_shapes)
-	{
-		m = glm::scale(glm::translate(mat4(1.0f), s.pos), s.scale);
-		basic_shader->set_uniform("Model", m);
-
-		GL_CALL(glEnable(GL_DEPTH_TEST));
-		m_meshes[s.mesh]->use();
-		basic_shader->set_uniform("base_color", s.f_color);
-		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-		GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[s.mesh]->idx_count(), GL_UNSIGNED_SHORT, 0));
-		basic_shader->set_uniform("base_color", s.l_color);
-		GL_CALL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-		GL_CALL(glDrawElements(GL_TRIANGLES, m_meshes[s.mesh]->idx_count(), GL_UNSIGNED_SHORT, 0));
-		GL_CALL(glDisable(GL_DEPTH_TEST));
 	}
 }
 
