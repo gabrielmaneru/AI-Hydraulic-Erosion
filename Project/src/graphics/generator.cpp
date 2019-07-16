@@ -34,8 +34,8 @@ void generator::set_uniforms(Shader_Program * shader_p, e_shader shader_type)
 		if (shader_type == e_shader::e_layer_mesh)
 		{
 			shader_p->set_uniform("useColor", true);
-			shader_p->set_uniform("base_color", vec4(0.0f, 0.0f, 0.0f, 1.0f));
-			shader_p->set_uniform("z_off", 0.00001f);
+			shader_p->set_uniform("base_color", vec4(0.1f, 0.1f, 0.1f, 1.0f));
+			shader_p->set_uniform("z_off", FLT_EPSILON);
 		}
 		else
 		{
@@ -58,84 +58,123 @@ void generator::set_uniforms(Shader_Program * shader_p, e_shader shader_type)
 
 void generator::draw_gui()
 {
-	if (ImGui::Button("Prev") && step > s_select_noise_map)
-		return change_step(step - 1);
-	ImGui::SameLine(0);
-	if (ImGui::Button("Next") && step < s_rasterization)
-		return change_step(step + 1);
-	ImGui::Text("Options:");
-
+	switch (step)
+	{
+	case s_select_noise_map:
+		ImGui::Text("Step: Selecting Noise Map");
+		ImGui::NewLine();
+		ImGui::SameLine(108);
+		//if (ImGui::Button("Prev", {60,20}))
+		//	return change_step(step - 1);
+		//ImGui::SameLine();
+		if (ImGui::Button("Next: Layers", {80,20}))
+			return change_step(s_apply_layers);
+		break;
+	case s_apply_layers:
+		ImGui::Text("Step: Selecting Layers");
+		ImGui::NewLine();
+		ImGui::SameLine(20);
+		if (ImGui::Button("Prev: Noise", { 80,20 }))
+			return change_step(s_select_noise_map);
+		ImGui::SameLine();
+		if (ImGui::Button("Next: Erosion", { 80,20 }))
+			return change_step(s_rasterization);
+		break;
+	case s_rasterization:
+		ImGui::Text("Step: Erosion");
+		ImGui::NewLine();
+		ImGui::SameLine(20);
+		if (ImGui::Button("Prev: Layers", { 80,20 }))
+			return change_step(s_apply_layers);
+		//ImGui::SameLine();
+		//if (ImGui::Button("Next", { 60,20 }))
+		//	return change_step(step - 1);
+		break;
+	default:
+		break;
+	}
+	ImGui::NewLine();
+	ImGui::NewLine();
+	
 	switch (step)
 	{
 	case s_select_noise_map:
 		{
 			bool changed = false;
-			if (ImGui::SliderFloat("Noise Scale", &m_noise.noise_scale, 0.0f, 10.0f))changed = true;
-			if (ImGui::InputInt("Iterations", &m_noise.iterations))changed = true;
-			if (ImGui::SliderFloat("Lacunarity", &m_noise.lacunarity, 0.0f, 2.0f))changed = true;
-			if (ImGui::SliderFloat("Persistance", &m_noise.persistance, 0.0f, 2.0f))changed = true;
-			if (ImGui::SliderFloat("FallOff Intensity", &m_noise.falloff.x, 0.5f, 5.0f))changed = true;
-			if (ImGui::SliderFloat("FallOff Form", &m_noise.falloff.y, -1.0f, 1.0f))changed = true;
-			if (ImGui::Button("Random"))
-				changed = true, randomize_noise();
-			if (ImGui::InputUInt("Preview Resolution", &m_noise.resolution))
-				changed = true;
-			ImGui::InputUInt("Resolution", &m_noise.post_resolution);
-			ImGui::Checkbox("Shadows", &m_shadowy);
-			if (ImGui::Button("BASIC 1", { 200, 100 }))
+			if (ImGui::TreeNode("Options:"))
 			{
-				m_noise.noise_scale=5.0f;
-				m_noise.iterations=8;
-				m_noise.lacunarity=2.0f;
-				m_noise.persistance =0.5f;
-				m_noise.falloff = { 0.5f,0.25f };
-				changed = true;
-			}ImGui::SameLine();
-			if (ImGui::Button("BASIC 2", { 200, 100 }))
-			{
-				m_noise.noise_scale = 5.0f;
-				m_noise.iterations = 8;
-				m_noise.lacunarity = 2.0f;
-				m_noise.persistance = 0.0f;
-				m_noise.falloff = { 0.5f,0.25f };
-				changed = true;
+				if (ImGui::SliderFloat("Noise Scale", &m_noise.noise_scale, 0.0f, 10.0f))changed = true;
+				if (ImGui::InputInt("Iterations", &m_noise.iterations))changed = true;
+				if (ImGui::SliderFloat("Lacunarity", &m_noise.lacunarity, 0.0f, 2.0f))changed = true;
+				if (ImGui::SliderFloat("Persistance", &m_noise.persistance, 0.0f, 2.0f))changed = true;
+				if (ImGui::SliderFloat("FallOff Intensity", &m_noise.falloff.x, 0.5f, 5.0f))changed = true;
+				if (ImGui::SliderFloat("FallOff Form", &m_noise.falloff.y, -1.0f, 1.0f))changed = true;
+				if (ImGui::Button("Random"))
+					changed = true, randomize_noise();
+				if (ImGui::InputUInt("Preview Resolution", &m_noise.resolution))
+					changed = true;
+				ImGui::InputUInt("Resolution", &m_noise.post_resolution);
+				ImGui::Checkbox("Shadows", &m_shadowy);
+				ImGui::TreePop();
 			}
+			if (ImGui::TreeNode("Maps:"))
+			{
+				if (ImGui::Button("BASIC 1", { 200, 100 }))
+				{
+					m_noise.noise_scale=5.0f;
+					m_noise.iterations=8;
+					m_noise.lacunarity=2.0f;
+					m_noise.persistance =0.5f;
+					m_noise.falloff = { 0.5f,0.25f };
+					changed = true;
+				}ImGui::SameLine();
+				if (ImGui::Button("BASIC 2", { 200, 100 }))
+				{
+					m_noise.noise_scale = 5.0f;
+					m_noise.iterations = 8;
+					m_noise.lacunarity = 2.0f;
+					m_noise.persistance = 0.0f;
+					m_noise.falloff = { 0.5f,0.25f };
+					changed = true;
+				}
 
-			if (ImGui::Button("ISLE 1", { 200, 100 }))
-			{
-				m_noise.noise_scale = 10.f;
-				m_noise.iterations = 8;
-				m_noise.lacunarity = 2.0f;
-				m_noise.persistance = 0.5f;
-				m_noise.falloff = { 0.5f, 1.0f };
-				changed = true;
-			}ImGui::SameLine();
-			if (ImGui::Button("ISLE 2", { 200, 100 }))
-			{
-				m_noise.noise_scale = 10.f;
-				m_noise.iterations = 8;
-				m_noise.lacunarity = 2.0f;
-				m_noise.persistance = 0.0f;
-				m_noise.falloff = { 0.5f, 1.0f };
-				changed = true;
-			}
-			if (ImGui::Button("LAKES 1", { 200, 100 }))
-			{
-				m_noise.noise_scale = 10.f;
-				m_noise.iterations = 8;
-				m_noise.lacunarity = 2.0f;
-				m_noise.persistance = 0.5f;
-				m_noise.falloff = { 0.5f, -1.0f };
-				changed = true;
-			}ImGui::SameLine();
-			if (ImGui::Button("LAKES 2", { 200, 100 }))
-			{
-				m_noise.noise_scale = 10.f;
-				m_noise.iterations = 8;
-				m_noise.lacunarity = 2.0f;
-				m_noise.persistance = 0.0f;
-				m_noise.falloff = { 0.5f, -1.0f };
-				changed = true;
+				if (ImGui::Button("ISLE 1", { 200, 100 }))
+				{
+					m_noise.noise_scale = 10.f;
+					m_noise.iterations = 8;
+					m_noise.lacunarity = 2.0f;
+					m_noise.persistance = 0.5f;
+					m_noise.falloff = { 0.5f, 1.0f };
+					changed = true;
+				}ImGui::SameLine();
+				if (ImGui::Button("ISLE 2", { 200, 100 }))
+				{
+					m_noise.noise_scale = 10.f;
+					m_noise.iterations = 8;
+					m_noise.lacunarity = 2.0f;
+					m_noise.persistance = 0.0f;
+					m_noise.falloff = { 0.5f, 1.0f };
+					changed = true;
+				}
+				if (ImGui::Button("LAKES 1", { 200, 100 }))
+				{
+					m_noise.noise_scale = 10.f;
+					m_noise.iterations = 8;
+					m_noise.lacunarity = 2.0f;
+					m_noise.persistance = 0.5f;
+					m_noise.falloff = { 0.5f, -1.0f };
+					changed = true;
+				}ImGui::SameLine();
+				if (ImGui::Button("LAKES 2", { 200, 100 }))
+				{
+					m_noise.noise_scale = 10.f;
+					m_noise.iterations = 8;
+					m_noise.lacunarity = 2.0f;
+					m_noise.persistance = 0.0f;
+					m_noise.falloff = { 0.5f, -1.0f };
+					changed = true;
+				}
+				ImGui::TreePop();
 			}
 
 			if (changed)
@@ -148,18 +187,50 @@ void generator::draw_gui()
 			ImGui::SliderFloat("Blendfactor", &m_blend_factor, -2.0f, 2.0f);
 			ImGui::SliderFloat("Slope", &m_terrain_slope, 0.0f, 3.0f);
 			ImGui::SliderFloat("Water Level", &m_water_height, 0.0f, this->levels[0].real_height);
-			for (int i = 0; i < levels.size(); ++i)
+
+			if (ImGui::Button("Reset", { 100, 40 }))
 			{
-				if (ImGui::TreeNode(("Layer_" + std::to_string(i)).c_str()))
+				m_blend_factor = 0.75f;
+				m_terrain_slope = 0.75f;
+				m_water_height = 0.05f;
+				levels=
 				{
-					ImGui::ColorEdit3("Color", &levels[i].color[0]);
-					if (i < levels.size() - 1)
-						if (ImGui::SliderFloat("Influence", &levels[i].txt_height, 0.0f, 1.0f) && i > 0)
-							levels[i].txt_height = glm::clamp(levels[i].txt_height, levels[i - 1].txt_height, levels[i + 1].txt_height);
-					ImGui::SliderFloat("Height", &levels[i].real_height, 0.00f, 0.2f);
-					ImGui::TreePop();
-				}
+					{ vec3{ 0.941f, 0.941f, 0.471f }, 0.25f, 0.05f },
+					{ vec3{ 0.118f, 0.471f, 0.235f }, 0.8f, 0.1f },
+					{ vec3{ 0.275f, 0.234f, 0.078f }, 0.9f, 0.05f },
+					{ vec3{ 0.196f, 0.196f, 0.196f }, 1.0f, 0.05f }
+				};
 			}
+
+			ImGui::Text("Sand");
+			ImGui::PushID("Sand");
+			ImGui::ColorEdit3("Color", &levels[0].color[0]);
+			if (ImGui::SliderFloat("Influence", &levels[0].txt_height, 0.0f, 1.0f))
+				levels[0].txt_height = min(levels[0].txt_height, levels[1].txt_height);
+			ImGui::SliderFloat("Height", &levels[0].real_height, 0.00f, 0.2f);
+			ImGui::PopID();
+
+			ImGui::Text("Grass");
+			ImGui::PushID("Grass");
+			ImGui::ColorEdit3("Color", &levels[1].color[0]);
+			if (ImGui::SliderFloat("Influence", &levels[1].txt_height, 0.0f, 1.0f))
+				levels[1].txt_height = glm::clamp(levels[1].txt_height, levels[0].txt_height, levels[2].txt_height);
+			ImGui::SliderFloat("Height", &levels[1].real_height, 0.00f, 0.2f);
+			ImGui::PopID();
+
+			ImGui::Text("Mountains");
+			ImGui::PushID("Mountains");
+			ImGui::ColorEdit3("Color", &levels[2].color[0]);
+			if (ImGui::SliderFloat("Influence", &levels[2].txt_height, 0.0f, 1.0f))
+				levels[2].txt_height = glm::clamp(levels[2].txt_height, levels[1].txt_height, levels[3].txt_height);
+			ImGui::SliderFloat("Height", &levels[2].real_height, 0.00f, 0.2f);
+			ImGui::PopID();
+
+			ImGui::Text("Snow");
+			ImGui::PushID("Snow");
+			ImGui::ColorEdit3("Color", &levels[3].color[0]);
+			ImGui::SliderFloat("Height", &levels[3].real_height, 0.00f, 0.2f);
+			ImGui::PopID();
 		}
 		break;
 	case s_rasterization:
@@ -241,6 +312,8 @@ void generator::draw_gui()
 			ImGui::SliderFloat("BlurForce", &m_eroder.blur_force, 0.0f, 1.0f);
 			ImGui::NewLine();
 			ImGui::NewLine();
+			ImGui::NewLine();
+			ImGui::NewLine();
 			ImGui::InputFloat("Inertia", &m_eroder.inertia);
 			ImGui::InputFloat("Capacity Factor", &m_eroder.capacity_factor);
 			ImGui::InputFloat("Deposit Factor", &m_eroder.deposit_factor);
@@ -249,6 +322,8 @@ void generator::draw_gui()
 			ImGui::InputInt("Erosion Radius", &m_eroder.erosion_radius);
 			ImGui::InputFloat("Gravity", &m_eroder.gravity);
 			ImGui::InputInt("Lifetime", &m_eroder.max_lifetime);
+			ImGui::NewLine();
+			ImGui::NewLine();
 			ImGui::NewLine();
 			ImGui::NewLine();
 			static char* items2[] = { "Normal", "Preserve Colors", "Drag Color", "Tracer" };
@@ -275,7 +350,9 @@ void generator::draw_gui()
 					m_eroder.reset_display();
 					m_eroder.update_texture(m_rasterized);
 				}
-				ImGui::SliderFloat("Hardness", &m_eroder.trace_hardness, 0.0f, 1.0f);
+				if(ImGui::SliderFloat("Hardness", &m_eroder.trace_hardness, 0.05f, 1.0f))
+					m_eroder.update_texture(m_rasterized);
+
 			}
 		}
 		break;
