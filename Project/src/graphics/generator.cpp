@@ -74,18 +74,73 @@ void generator::draw_gui()
 			if (ImGui::InputInt("Iterations", &m_noise.iterations))changed = true;
 			if (ImGui::SliderFloat("Lacunarity", &m_noise.lacunarity, 0.0f, 2.0f))changed = true;
 			if (ImGui::SliderFloat("Persistance", &m_noise.persistance, 0.0f, 2.0f))changed = true;
-			if (ImGui::SliderFloat("Complexity", &m_noise.lacunarity, 0.5f, 2.0f))m_noise.persistance = 1 / m_noise.lacunarity, changed = true;
 			if (ImGui::SliderFloat("FallOff Intensity", &m_noise.falloff.x, 0.5f, 5.0f))changed = true;
 			if (ImGui::SliderFloat("FallOff Form", &m_noise.falloff.y, -1.0f, 1.0f))changed = true;
 			if (ImGui::Button("Random"))
 				changed = true, randomize_noise();
 			if (ImGui::InputUInt("Preview Resolution", &m_noise.resolution))
 				changed = true;
+			ImGui::InputUInt("Resolution", &m_noise.post_resolution);
+			ImGui::Checkbox("Shadows", &m_shadowy);
+			if (ImGui::Button("BASIC 1", { 200, 100 }))
+			{
+				m_noise.noise_scale=5.0f;
+				m_noise.iterations=8;
+				m_noise.lacunarity=2.0f;
+				m_noise.persistance =0.5f;
+				m_noise.falloff = { 0.5f,0.25f };
+				changed = true;
+			}ImGui::SameLine();
+			if (ImGui::Button("BASIC 2", { 200, 100 }))
+			{
+				m_noise.noise_scale = 5.0f;
+				m_noise.iterations = 8;
+				m_noise.lacunarity = 2.0f;
+				m_noise.persistance = 0.0f;
+				m_noise.falloff = { 0.5f,0.25f };
+				changed = true;
+			}
+
+			if (ImGui::Button("ISLE 1", { 200, 100 }))
+			{
+				m_noise.noise_scale = 10.f;
+				m_noise.iterations = 8;
+				m_noise.lacunarity = 2.0f;
+				m_noise.persistance = 0.5f;
+				m_noise.falloff = { 0.5f, 1.0f };
+				changed = true;
+			}ImGui::SameLine();
+			if (ImGui::Button("ISLE 2", { 200, 100 }))
+			{
+				m_noise.noise_scale = 10.f;
+				m_noise.iterations = 8;
+				m_noise.lacunarity = 2.0f;
+				m_noise.persistance = 0.0f;
+				m_noise.falloff = { 0.5f, 1.0f };
+				changed = true;
+			}
+			if (ImGui::Button("LAKES 1", { 200, 100 }))
+			{
+				m_noise.noise_scale = 10.f;
+				m_noise.iterations = 8;
+				m_noise.lacunarity = 2.0f;
+				m_noise.persistance = 0.5f;
+				m_noise.falloff = { 0.5f, -1.0f };
+				changed = true;
+			}ImGui::SameLine();
+			if (ImGui::Button("LAKES 2", { 200, 100 }))
+			{
+				m_noise.noise_scale = 10.f;
+				m_noise.iterations = 8;
+				m_noise.lacunarity = 2.0f;
+				m_noise.persistance = 0.0f;
+				m_noise.falloff = { 0.5f, -1.0f };
+				changed = true;
+			}
+
 			if (changed)
 				m_noise.generate();
 
-			ImGui::InputUInt("Resolution", &m_noise.post_resolution);
-			ImGui::Checkbox("Shadows", &m_shadowy);
 		}
 		break;
 	case s_apply_layers:
