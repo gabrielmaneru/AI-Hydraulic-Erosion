@@ -19,7 +19,7 @@ struct generator
 	rasterized_data m_rasterized;
 	float m_blend_factor{ 0.5f };
 	float m_terrain_slope{ 0.7f };
-	float m_water_height{ 0.05f };
+	float m_water_height{ 0.03f };
 
 	// Water
 	float m_reflect_factor{ 0.55f };

@@ -190,15 +190,15 @@ void generator::draw_gui()
 
 			if (ImGui::Button("Reset", { 100, 40 }))
 			{
-				m_blend_factor = 0.75f;
-				m_terrain_slope = 0.75f;
-				m_water_height = 0.05f;
+				m_blend_factor = 0.5f;
+				m_terrain_slope = 0.7f;
+				m_water_height = 0.03f;
 				levels=
 				{
-					{ vec3{ 0.941f, 0.941f, 0.471f }, 0.25f, 0.05f },
-					{ vec3{ 0.118f, 0.471f, 0.235f }, 0.8f, 0.1f },
-					{ vec3{ 0.275f, 0.234f, 0.078f }, 0.9f, 0.05f },
-					{ vec3{ 0.196f, 0.196f, 0.196f }, 1.0f, 0.05f }
+					{ vec3{ 1.00f, 1.00f, 0.54f }, 0.25f, 0.05f },
+					{ vec3{ 0.07f, 0.32f, 0.15f }, 0.5f, 0.05f },
+					{ vec3{ 0.27f, 0.23f, 0.07f }, 0.75f, 0.05f },
+					{ vec3{ 1.00f, 1.00f, 1.00f }, 1.0f, 0.05f }
 				};
 			}
 
