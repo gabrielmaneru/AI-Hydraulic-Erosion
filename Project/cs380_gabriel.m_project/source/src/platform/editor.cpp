@@ -51,7 +51,7 @@ void c_editor::shutdown()
 
 void c_editor::draw_main_window()
 {
-	ImGui::Begin("cs350 - editor", nullptr, ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Hydraulic Erosion", nullptr, ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2{ 0.0f, 0.0f });
 
 	//if (ImGui::TreeNode("Camera"))
